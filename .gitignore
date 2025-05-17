@@ -1,0 +1,8 @@
+# create git ignore for next.js + typescript + tailwindcss
+
+node_modules
+.next
+.env
+.env.local
+
+.cursor*
