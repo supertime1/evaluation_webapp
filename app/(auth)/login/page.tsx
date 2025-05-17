@@ -1,33 +1,70 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { authApi } from '@/lib/api/auth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Check for registration success message
+  useEffect(() => {
+    if (searchParams?.get('registered') === 'true') {
+      setSuccess('Account created successfully. Please log in.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setSuccess('');
     
     try {
-      // This would normally call your authentication API
-      console.log('Logging in with:', email, password);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Attempting login with:', email);
+      
+      // Call the actual FastAPI endpoint for login
+      const result = await authApi.login({
+        username: email, // FastAPI expects 'username' field
+        password,
+      });
+      
+      console.log('Login successful, result:', result);
       
       // On success, redirect to dashboard
       router.push('/');
-    } catch (err) {
-      setError('Login failed. Please check your credentials.');
+    } catch (err: any) {
+      console.error('Login error details:', {
+        message: err.message,
+        response: err.response ? {
+          status: err.response.status,
+          data: err.response.data,
+          headers: err.response.headers
+        } : 'No response object',
+        request: err.request ? 'Request exists' : 'No request object',
+      });
+      
+      // Display friendly error message
+      if (err.response) {
+        if (err.response.status === 400 || err.response.status === 401 || err.response.status === 422) {
+          setError('Invalid email or password. Please try again.');
+        } else {
+          setError(err.response.data?.detail || 'Login failed. Please check your credentials.');
+        }
+      } else if (err.request) {
+        setError('Unable to connect to the server. Please try again later.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -41,6 +78,12 @@ export default function LoginPage() {
           Enter your credentials to access FortiEval
         </p>
       </div>
+
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm mb-6">
+          {success}
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm mb-6">
