@@ -29,9 +29,13 @@ apiClient.interceptors.response.use(
   (error) => {
     // Handle 401 Unauthorized errors (e.g., redirect to login)
     if (error.response && error.response.status === 401) {
-      // Clear any stored tokens
-      // Redirect to login page
-      window.location.href = '/login';
+      // Only redirect to login if we're not already on the login page
+      // This prevents redirect loops
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/logout') {
+        // Redirect to login page
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);

@@ -10,13 +10,13 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <div className="w-64 bg-gray-900 text-white">
         <div className="p-4">
-          <h1 className="font-bold text-xl">Evaluation Dashboard</h1>
+          <h1 className="font-bold text-xl">FortiEval</h1>
         </div>
         <nav className="mt-8">
           <ul className="space-y-2 px-4">
             <li>
               <Link
-                href="/"
+                href="/dashboard"
                 className="block py-2 px-4 rounded hover:bg-gray-800"
               >
                 Dashboard
@@ -24,7 +24,7 @@ export default function DashboardLayout({
             </li>
             <li>
               <Link
-                href="/experiments"
+                href="/dashboard/experiments"
                 className="block py-2 px-4 rounded hover:bg-gray-800"
               >
                 Experiments
@@ -32,7 +32,7 @@ export default function DashboardLayout({
             </li>
             <li>
               <Link
-                href="/test-cases"
+                href="/dashboard/test-cases"
                 className="block py-2 px-4 rounded hover:bg-gray-800"
               >
                 Test Cases
@@ -66,11 +66,14 @@ export default function DashboardLayout({
                   />
                 </svg>
               </button>
-              <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-500">
+              <Link 
+                href="/logout"
+                className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-500 hover:bg-gray-600"
+              >
                 <span className="text-xs font-medium leading-none text-white">
-                  JD
+                  LZ
                 </span>
-              </span>
+              </Link>
             </div>
           </div>
         </header>
