@@ -20,28 +20,19 @@ export default function LoginPage() {
   const [success, setSuccess] = useState('');
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Check for registration success message
-  useEffect(() => {
-    if (searchParams?.get('registered') === 'true') {
-      setSuccess('Account created successfully. Please log in.');
-    }
-  }, [searchParams]);
-  
-  // Check if already authenticated and redirect if needed
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log('Already authenticated, redirecting to dashboard');
-      window.location.href = '/dashboard';
-    }
-    setIsCheckingAuth(false);
-  }, [isAuthenticated]);
+  // // Check for registration success message
+  // useEffect(() => {
+  //   if (searchParams?.get('registered') === 'true') {
+  //     setSuccess('Account created successfully. Please log in.');
+  //   }
+  // }, [searchParams]);
 
-  // Update local error state when auth error changes
-  useEffect(() => {
-    if (authError) {
-      setError(authError.message);
-    }
-  }, [authError]);
+  // // Update local error state when auth error changes
+  // useEffect(() => {
+  //   if (authError) {
+  //     setError(authError.message);
+  //   }
+  // }, [authError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,11 +49,12 @@ export default function LoginPage() {
         password,
       });
       
+      console.log('Login successful, loading user data');
       // Then load user data
       await loadUser();
-      
+      console.log('User data loaded, redirecting to dashboard');
       // If we got this far without errors, redirect to dashboard
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
       
     } catch (err: any) {
       console.error('Login error:', err);

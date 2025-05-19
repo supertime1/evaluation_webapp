@@ -17,7 +17,7 @@ class NetworkManager {
 
     // Initialize API client
     this.apiClient = this.createApiClient();
-    this.setupInterceptors();
+    // this.setupInterceptors();
   }
 
   // Create configured Axios instance
@@ -33,40 +33,40 @@ class NetworkManager {
     });
   }
 
-  // Setup request and response interceptors
-  private setupInterceptors(): void {
-    // Request interceptor
-    this.apiClient.interceptors.request.use(
-      (config) => {
-        // You can add token from localStorage/cookies here if needed
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
+//   // Setup request and response interceptors
+//   private setupInterceptors(): void {
+//     // Request interceptor
+//     this.apiClient.interceptors.request.use(
+//       (config) => {
+//         // You can add token from localStorage/cookies here if needed
+//         return config;
+//       },
+//       (error) => {
+//         return Promise.reject(error);
+//       }
+//     );
 
-    // Response interceptor
-    this.apiClient.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      (error) => {
-        // Handle 401 Unauthorized errors (e.g., redirect to login)
-        if (error.response && error.response.status === 401) {
-          // Clear auth state
-          authManager.logout().catch(console.error);
+//     // Response interceptor
+//     this.apiClient.interceptors.response.use(
+//       (response) => {
+//         return response;
+//       },
+//       (error) => {
+//         // Handle 401 Unauthorized errors (e.g., redirect to login)
+//         if (error.response && error.response.status === 401) {
+//           // Clear auth state
+//           authManager.logout().catch(console.error);
           
-          // Redirect to login page
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
-        }
+//           // Redirect to login page
+//           if (typeof window !== 'undefined') {
+//             window.location.href = '/login';
+//           }
+//         }
         
-        return Promise.reject(error);
-      }
-    );
-  }
+//         return Promise.reject(error);
+//       }
+//     );
+//   }
 
   // Get the configured API client
   getApiClient(): AxiosInstance {
