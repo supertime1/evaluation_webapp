@@ -2,70 +2,29 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-    // Get all possible auth tokens
-    const authToken = request.cookies.get('auth-token')?.value;
-    const localStorageToken = request.headers.get('x-auth-token');
-    
-    // Check if any token exists
-    const hasToken = authToken || localStorageToken;
+    // Get auth tokens if they exist
+    const authCookie = request.cookies.get('fastapiusersauth')?.value;
+    const hasToken = !!authCookie;
 
-    console.log('[Middleware] Request path:', request.nextUrl.pathname);
-    console.log('[Middleware] Request protocol:', request.nextUrl.protocol);
-    console.log('[Middleware] Auth token from cookie:', authToken);
-    console.log('[Middleware] Auth token from header:', localStorageToken);
-    console.log('[Middleware] Has token:', hasToken);
-    console.log('[Middleware] All cookies:', request.cookies.toString());
-
-
-    // Home page redirect
+    // For the homepage, always redirect to login or dashboard
     if (request.nextUrl.pathname === '/') {
-      return NextResponse.redirect(new URL('/login', request.url));
+        if (hasToken) {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+        } else {
+            return NextResponse.redirect(new URL('/login', request.url));
+        }
     }
 
-
-    // Check if the request is for the dashboard
+    // For dashboard, check if authenticated
     if (request.nextUrl.pathname.startsWith('/dashboard')) {
         if (!hasToken) {
-            console.log('[Middleware] No token found, redirecting to sign-in');
-            // Add cache-busting parameter to prevent caching issues
-            const signInUrl = new URL('/login', request.url);
-            signInUrl.searchParams.set('t', Date.now().toString());
-            return NextResponse.redirect(signInUrl);
-        }
-
-        try {
-            // You can add additional token validation here if needed
-            console.log('[Middleware] Token found, allowing access to dashboard');
-            const response = NextResponse.next();
-            // Ensure the token is included in the response
-            if (authToken) {
-                response.cookies.set('auth-token', authToken, {
-                    path: '/',
-                    secure: request.nextUrl.protocol === 'https:',
-                    sameSite: 'lax',
-                    maxAge: 86400 // 24 hours
-                });
-            }
-            return response;
-        } catch (error) {
-            console.log('[Middleware] Error validating token:', error);
-            // If token is invalid, redirect to sign-in with cache-busting
-            const signInUrl = new URL('/login', request.url);
-            signInUrl.searchParams.set('t', Date.now().toString());
-            return NextResponse.redirect(signInUrl);
+            return NextResponse.redirect(new URL('/login', request.url));
         }
     }
 
-    // Allow access to sign-in and register pages
-    if (request.nextUrl.pathname.startsWith('/login') || 
-        request.nextUrl.pathname.startsWith('/register')) {
-        if (hasToken) {
-            console.log('[Middleware] User already authenticated, redirecting to dashboard');
-            // If user is already authenticated, redirect to dashboard with cache-busting
-            const dashboardUrl = new URL('/dashboard', request.url);
-            dashboardUrl.searchParams.set('t', Date.now().toString());
-            return NextResponse.redirect(dashboardUrl);
-        }
+    // For login page, redirect to dashboard if already authenticated
+    if (request.nextUrl.pathname === '/login' && hasToken) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
     return NextResponse.next();
@@ -75,8 +34,7 @@ export function middleware(request: NextRequest) {
 export const config = {
     matcher: [
         '/',
-        '/dashboard/:path*',
         '/login',
-        '/register'
+        '/dashboard/:path*'
     ]
 }; 
