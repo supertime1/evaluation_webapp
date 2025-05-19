@@ -1,49 +1,45 @@
 'use client';
 
 import {
-  UserGroupIcon,
   HomeIcon,
-  DocumentDuplicateIcon,
-  UserIcon,
-  Cog6ToothIcon,
   Squares2X2Icon,
-  UsersIcon,
-  BellAlertIcon,
-  ChatBubbleLeftRightIcon,
+  BeakerIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import clsx from 'clsx';
-import { useEffect, useState } from 'react';
-
+import { cn } from '@/lib/utils';
 
 const NavLinks: React.FC = () => {
   const pathname = usePathname();
 
-
   const links = [
-    { name: 'Home', href: '/dashboard', icon: HomeIcon },
-    { name: 'Experiments', href: '/dashboard/experiments', icon: UsersIcon },
+    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+    { name: 'Experiments', href: '/dashboard/experiments', icon: BeakerIcon },
     { name: 'Test Cases', href: '/dashboard/test-cases', icon: Squares2X2Icon },
-
   ];
 
   return (
-    <>
-
-      {(
-        <Link
-          href="/dashboard/admin"
-          className={clsx(
-            'flex h-[48px] grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-sky-100 hover:text-blue-600 md:flex-none md:justify-start md:p-2 md:px-3',
-            {
-              'bg-sky-100 text-blue-600': pathname === "/dashboard/admin",
-            },
-          )}
-        >
-        </Link>
-      )}
-    </>
+    <nav className="space-y-1">
+      {links.map((link) => {
+        const isActive = pathname === link.href || pathname?.startsWith(`${link.href}/`);
+        
+        return (
+          <Link
+            key={link.name}
+            href={link.href}
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              isActive 
+                ? "bg-slate-50 text-slate-900" 
+                : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+            )}
+          >
+            <link.icon className="h-5 w-5" />
+            <span>{link.name}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 };
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-
+import { Button } from '@/components/ui/button';
 
 type SyncStatus = 'loading' | 'success' | 'error';
 
@@ -19,24 +19,11 @@ export default function DashboardPage() {
     const initializeData = async () => {
         setSyncStatus('loading');
         setSyncError(null);
-        // try {
-        //     console.log('[DashboardPage] Initializing data');
-        //     const syncManager = SyncManager.getInstance();
-        //     await syncManager.syncState();
-        //     console.log('[DashboardPage] Sync complete');
-        //     const metricManager = MetricManager.getInstance();
-        //     await metricManager.syncCustomMetricGoals();
-        //     // After sync is complete, refresh both lists
-        //     await Promise.all([
-        //         memberListRef.current?.refresh(),
-        //         programListRef.current?.refresh()
-        //     ]);
-        //     setSyncStatus('success');
-        // } catch (error) {
-        //     console.error('Error during sync:', error);
-        //     setSyncError(error instanceof Error ? error.message : 'Failed to sync data');
-        //     setSyncStatus('error');
-        // }
+        
+        // Simulate data loading
+        setTimeout(() => {
+            setSyncStatus('success');
+        }, 1500);
     };
 
     // Initial load
@@ -70,29 +57,29 @@ export default function DashboardPage() {
 
     if (syncStatus === 'error') {
         return (
-            <main className="min-h-screen bg-gray-50 p-6">
+            <main className="min-h-screen bg-white p-6">
                 <div className="max-w-7xl mx-auto">
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+                    <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
                         <div className="flex items-center">
                             <div className="flex-shrink-0">
-                                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <svg className="h-5 w-5 text-red-700" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                 </svg>
                             </div>
                             <div className="ml-3">
-                                <h3 className="text-sm font-medium text-red-800">
+                                <h3 className="text-sm font-medium text-red-700">
                                     Failed to sync data
                                 </h3>
                                 <div className="mt-2 text-sm text-red-700">
-                                    {syncError}
+                                    {syncError || 'An error occurred while syncing data. Please try again.'}
                                 </div>
                                 <div className="mt-4">
-                                    <button
+                                    <Button
                                         onClick={handleRetrySync}
-                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                        className="h-11 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md"
                                     >
                                         Retry Sync
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -105,11 +92,11 @@ export default function DashboardPage() {
     const isLoading = syncStatus === 'loading';
 
     return (
-        <main className="min-h-screen bg-gray-50 p-6">
+        <main className="min-h-screen bg-white">
             {isLoading && (
-                <div className="bg-blue-50 p-2 text-center text-sm text-blue-700 mb-4">
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm mb-6">
                     <div className="flex items-center justify-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
@@ -117,115 +104,70 @@ export default function DashboardPage() {
                     </div>
                 </div>
             )}
-            <div className="max-w-7xl mx-auto space-y-8">
+            <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                    <div className='w-full max-w-2xl'>
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            {userName ? `Welcome back, ${userName}!` : 'Welcome back!'}
+                    <div className="w-full max-w-2xl">
+                        <h1 className="text-2xl font-bold text-slate-800">
+                            {userName ? `Welcome back, ${userName}!` : 'Welcome to FortiEval'}
                         </h1>
-                        <p className="text-gray-600 mt-3">Check out your latest experiments here.</p>
+                        <p className="text-sm text-slate-500 mt-1">Define, run, and visualize your LLM evaluation experiments with ease</p>
+                    </div>
+                </div>
+
+                {/* Dashboard content section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Experiments Card */}
+                    <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
+                        <h3 className="text-base font-semibold text-slate-900 mb-4">Recent Experiments</h3>
+                        <div className="text-sm text-slate-700">
+                            {isLoading ? (
+                                <div className="space-y-3">
+                                    <div className="h-8 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="h-8 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="h-8 bg-slate-100 rounded animate-pulse"></div>
+                                </div>
+                            ) : (
+                                <p className="text-slate-500">No experiments yet. Create your first experiment.</p>
+                            )}
+                        </div>
+                        <div className="mt-6">
+                            <Link href="/dashboard/experiments/new">
+                                <Button 
+                                    className="w-full h-11 bg-slate-900 hover:bg-slate-800 mt-3"
+                                >
+                                    Create Experiment
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
+                    {/* Test Cases Card */}
+                    <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
+                        <h3 className="text-base font-semibold text-slate-900 mb-4">Test Cases</h3>
+                        <div className="text-sm text-slate-700">
+                            {isLoading ? (
+                                <div className="space-y-3">
+                                    <div className="h-8 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="h-8 bg-slate-100 rounded animate-pulse"></div>
+                                    <div className="h-8 bg-slate-100 rounded animate-pulse"></div>
+                                </div>
+                            ) : (
+                                <p className="text-slate-500">No test cases yet. Create your first test case.</p>
+                            )}
+                        </div>
+                        <div className="mt-6">
+                            <Link href="/dashboard/test-cases/new">
+                                <Button 
+                                    className="w-full h-11 border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-md"
+                                >
+                                    Create Test Case
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
                 </div>
-
-                {/* Summary Cards Section */}
-                {/* <div className={isLoading ? 'animate-pulse' : ''}>
-                    <SummaryCards 
-                        isLoading={isLoading} 
-                        onMemberUpdate={() => {
-                            memberListRef.current?.refresh();
-                        }}
-                    />
-                </div> */}
-
-                {/* Lists Section */}
-                {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"> */}
-                    {/* Programs Card */}
-                    {/* <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                        <div className="flex justify-between items-center mb-6 flex-wrap">
-                            <h2 className="text-xl font-semibold text-gray-900 truncate">Programs</h2>
-                            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                                <button 
-                                    onClick={handleRefreshPrograms}
-                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 focus:outline-none disabled:opacity-50 flex-wrap"
-                                    disabled={isRefreshingPrograms || isLoading}
-                                >
-                                    <svg 
-                                        className={`mr-1.5 h-4 w-4 ${isRefreshingPrograms ? 'animate-spin' : ''}`} 
-                                        xmlns="http://www.w3.org/2000/svg" 
-                                        fill="none" 
-                                        viewBox="0 0 24 24" 
-                                        stroke="currentColor"
-                                    >
-                                        <path 
-                                            strokeLinecap="round" 
-                                            strokeLinejoin="round" 
-                                            strokeWidth={2} 
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
-                                        />
-                                    </svg>
-                                    Refresh
-                                </button>
-                                <Link 
-                                    href="/dashboard/programs"
-                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 flex-wrap"
-                                >
-                                    View All
-                                    <svg className="ml-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </Link>
-                            </div>
-                        </div>
-                        <div className={`bg-gray-50 rounded-lg p-4 min-w-0 ${isLoading ? 'animate-pulse' : ''}`}>
-                            <ProgramList ref={programListRef} maxRows={10} isLoading={isLoading} />
-                        </div>
-                    </div> */}
-
-                    {/* Members Card */}
-                    {/* <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-                        <div className="flex justify-between items-center mb-6 flex-wrap">
-                            <h2 className="text-xl font-semibold text-gray-900 truncate">Members</h2>
-                            <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-                                <button 
-                                    onClick={handleRefreshMembers}
-                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 focus:outline-none disabled:opacity-50 flex-wrap"
-                                    disabled={isRefreshingMembers || isLoading}
-                                >
-                                    <svg 
-                                        className={`mr-1.5 h-4 w-4 ${isRefreshingMembers ? 'animate-spin' : ''}`} 
-                                        xmlns="http://www.w3.org/2000/svg" 
-                                        fill="none" 
-                                        viewBox="0 0 24 24" 
-                                        stroke="currentColor"
-                                    >
-                                        <path 
-                                            strokeLinecap="round" 
-                                            strokeLinejoin="round" 
-                                            strokeWidth={2} 
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
-                                        />
-                                    </svg>
-                                    Refresh
-                                </button>
-                                <Link 
-                                    href="/dashboard/members"
-                                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 flex-wrap"
-                                >
-                                    View All
-                                    <svg className="ml-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </Link>
-                            </div>
-                        </div>
-                        <div className={`bg-gray-50 rounded-lg p-4 min-w-0 ${isLoading ? 'animate-pulse' : ''}`}>
-                            <MemberList ref={memberListRef} maxRows={10} isLoading={isLoading} showDeviceButton={false}/>
-                        </div>
-                    </div> */}
-                </div>
-            {/* </div> */}
+            </div>
         </main>
     );
 } 
