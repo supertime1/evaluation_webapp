@@ -11,16 +11,10 @@ interface RegisterData {
   name?: string;
 }
 
-// Token storage helpers - simplified for HTTP-only cookies
-const TOKEN_KEY = 'fortieval_auth_token';
-
-// Simple token clearing function
-const clearToken = () => {
+// Simple function to clear auth state (no localStorage usage)
+const clearAuthState = () => {
   if (typeof window !== 'undefined') {
-    // Clear from localStorage
-    localStorage.removeItem(TOKEN_KEY);
-    
-    // Clear from API headers
+    // Clear from API headers just in case
     const apiClient = networkManager.getApiClient();
     delete apiClient.defaults.headers.common['Authorization'];
   }
@@ -36,32 +30,33 @@ export const authApi = {
     try {
       console.log('Auth API: Sending login request with form data');
       
-      // Clear any existing tokens/markers that might interfere
-      clearToken();
+      // Clear any existing auth state
+      clearAuthState();
       
       const apiClient = networkManager.getApiClient();
       const response = await apiClient.post('/api/v1/auth/jwt/login', formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        withCredentials: true, // Critical for cookies
+        withCredentials: true, // Critical for HTTP-only cookies
       });
       
       console.log('Auth API: Login response status:', response.status);
       
-      // For FastAPI with HTTP-only cookies, we don't have access to the actual token
-      // So we need to verify that we're actually authenticated by making a test request
+      // For FastAPI with HTTP-only cookies, we verify authentication by making a test request
       if (response.status === 204 || response.status === 200) {
+        // Add a small delay before verification to allow cookies to be set
+        await new Promise(resolve => setTimeout(resolve, 300)); // Increased delay for reliability
+        
         try {
-          // Try to verify authentication immediately
-          const userResponse = await apiClient.get('/api/v1/users/me', {
-            withCredentials: true,
+          // Verify authentication with protected endpoint
+          const userResponse = await networkManager.getApiClient().get('/api/v1/users/me', {
+            withCredentials: true
           });
           
           // If this succeeds, we're authenticated via HTTP-only cookies
           if (userResponse.data) {
-            console.log('Auth API: Authenticated via FastAPI cookies, user verified');
-            // No need to set any markers - FastAPI's HTTP-only cookies handle auth
+            console.log('Auth API: Authenticated via FastAPI HTTP-only cookies, user verified');
             return { success: true, user: userResponse.data };
           }
         } catch (error) {
@@ -70,17 +65,7 @@ export const authApi = {
         }
       }
       
-      // If we have access_token in the response, use it (fallback)
-      if (response.data && response.data.access_token) {
-        const token = response.data.access_token;
-        // Only set in Authorization header, don't set cookies
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        localStorage.setItem(TOKEN_KEY, token);
-        console.log('Auth API: Using explicit token from response');
-        return { success: true };
-      }
-      
-      // Should not reach here if auth was successful
+      // If we reach here, something went wrong with the login
       throw new Error('Login response did not contain expected authentication data');
     } catch (error) {
       console.error('Login API error:', error);
@@ -90,7 +75,9 @@ export const authApi = {
 
   register: async (data: RegisterData) => {
     try {
-      const response = await networkManager.getApiClient().post('/api/v1/auth/register', data);
+      const response = await networkManager.getApiClient().post('/api/v1/auth/register', data, {
+        withCredentials: true
+      });
       return response.data;
     } catch (error) {
       console.error('Register API error:', error);
@@ -100,15 +87,16 @@ export const authApi = {
 
   logout: async () => {
     try {
-      // This should clear FastAPI's HTTP-only cookies
+      // This will clear FastAPI's HTTP-only cookies
       const response = await networkManager.getApiClient().post('/api/v1/auth/jwt/logout', {}, {
         withCredentials: true
       });
-      clearToken(); // Clear any local tokens as well
+      // No need to clear localStorage, just make sure header is clean
+      clearAuthState();
       return response.data;
     } catch (error) {
       console.error('Logout API error:', error);
-      clearToken(); // Clear token even if API fails
+      clearAuthState();
       throw error;
     }
   },
@@ -117,7 +105,7 @@ export const authApi = {
     try {
       console.log('Auth API: Fetching current user');
       
-      // Always use withCredentials to send cookies
+      // Always use withCredentials to send HTTP-only cookies
       const response = await networkManager.getApiClient().get('/api/v1/users/me', { 
         withCredentials: true 
       });
@@ -138,10 +126,5 @@ export const authApi = {
     } catch (error) {
       return false;
     }
-  },
-  
-  // Check synchronously (less reliable but needed in some cases)
-  isAuthenticatedSync: () => {
-    return localStorage.getItem(TOKEN_KEY) !== null;
   }
 }; 

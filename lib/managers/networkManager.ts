@@ -17,7 +17,7 @@ class NetworkManager {
 
     // Initialize API client
     this.apiClient = this.createApiClient();
-    // this.setupInterceptors();
+    this.setupInterceptors();
   }
 
   // Create configured Axios instance
@@ -29,44 +29,50 @@ class NetworkManager {
       headers: {
         'Content-Type': 'application/json',
       },
-      withCredentials: true, // Important for handling cookies with JWT
+      withCredentials: true, // Enable HTTP-only cookies for all requests by default
     });
   }
 
-//   // Setup request and response interceptors
-//   private setupInterceptors(): void {
-//     // Request interceptor
-//     this.apiClient.interceptors.request.use(
-//       (config) => {
-//         // You can add token from localStorage/cookies here if needed
-//         return config;
-//       },
-//       (error) => {
-//         return Promise.reject(error);
-//       }
-//     );
+  // Setup request and response interceptors
+  private setupInterceptors(): void {
+    // Request interceptor
+    this.apiClient.interceptors.request.use(
+      (config) => {
+        // Always include credentials for HTTP-only cookies
+        config.withCredentials = true;
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
 
-//     // Response interceptor
-//     this.apiClient.interceptors.response.use(
-//       (response) => {
-//         return response;
-//       },
-//       (error) => {
-//         // Handle 401 Unauthorized errors (e.g., redirect to login)
-//         if (error.response && error.response.status === 401) {
-//           // Clear auth state
-//           authManager.logout().catch(console.error);
+    // Response interceptor
+    this.apiClient.interceptors.response.use(
+      (response) => {
+        return response;
+      },
+      (error) => {
+        // Handle 401 Unauthorized errors (e.g., redirect to login)
+        if (error.response && 
+            error.response.status === 401 && 
+            // Avoid triggering logout for user check endpoints
+            !error.config.url?.includes('/users/me') &&
+            // Avoid triggering for auth endpoints
+            !error.config.url?.includes('/auth/')) {
+            
+          console.log('Unauthorized access detected, logging out');
           
-//           // Redirect to login page
-//           if (typeof window !== 'undefined') {
-//             window.location.href = '/login';
-//           }
-//         }
+          // Only redirect, don't call logout to avoid loops
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
         
-//         return Promise.reject(error);
-//       }
-//     );
-//   }
+        return Promise.reject(error);
+      }
+    );
+  }
 
   // Get the configured API client
   getApiClient(): AxiosInstance {
@@ -76,7 +82,12 @@ class NetworkManager {
   // Make a GET request
   async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await this.apiClient.get<T>(url, config);
+      // Ensure withCredentials is always true
+      const mergedConfig = { 
+        ...config, 
+        withCredentials: true 
+      };
+      const response = await this.apiClient.get<T>(url, mergedConfig);
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
@@ -87,7 +98,12 @@ class NetworkManager {
   // Make a POST request
   async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await this.apiClient.post<T>(url, data, config);
+      // Ensure withCredentials is always true
+      const mergedConfig = { 
+        ...config, 
+        withCredentials: true 
+      };
+      const response = await this.apiClient.post<T>(url, data, mergedConfig);
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
@@ -98,7 +114,12 @@ class NetworkManager {
   // Make a PUT request
   async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await this.apiClient.put<T>(url, data, config);
+      // Ensure withCredentials is always true
+      const mergedConfig = { 
+        ...config, 
+        withCredentials: true 
+      };
+      const response = await this.apiClient.put<T>(url, data, mergedConfig);
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
@@ -109,7 +130,12 @@ class NetworkManager {
   // Make a DELETE request
   async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
     try {
-      const response = await this.apiClient.delete<T>(url, config);
+      // Ensure withCredentials is always true
+      const mergedConfig = { 
+        ...config, 
+        withCredentials: true 
+      };
+      const response = await this.apiClient.delete<T>(url, mergedConfig);
       return response.data;
     } catch (error) {
       this.handleError(error as AxiosError);
