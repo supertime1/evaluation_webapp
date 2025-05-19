@@ -20,7 +20,7 @@ class NetworkManager {
 
   // Create configured Axios instance
   private createApiClient(): AxiosInstance {
-    const API_URL = 'http://127.0.0.1:8000';
+    const API_URL = 'http://localhost:8000';
     
     return axios.create({
       baseURL: API_URL,

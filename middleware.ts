@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
     // Get auth tokens if they exist
-    const authCookie = request.cookies.get('fastapiusersauth')?.value;
+    const authCookie = request.cookies.get('auth')?.value;
     const hasToken = !!authCookie;
 
     // For the homepage, always redirect to login or dashboard

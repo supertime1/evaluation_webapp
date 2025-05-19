@@ -42,14 +42,16 @@ export const authApi = {
       });
       
       console.log('Auth API: Login response status:', response.status);
+      console.log('Auth API: Login response headers:', response.headers);
       
       // For FastAPI with HTTP-only cookies, we verify authentication by making a test request
       if (response.status === 204 || response.status === 200) {
         // Add a small delay before verification to allow cookies to be set
-        await new Promise(resolve => setTimeout(resolve, 300)); // Increased delay for reliability
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Increased delay for reliability
         
         try {
           // Verify authentication with protected endpoint
+          console.log('Auth API: Verifying authentication...');
           const userResponse = await networkManager.getApiClient().get('/api/v1/users/me', {
             withCredentials: true
           });
@@ -61,6 +63,7 @@ export const authApi = {
           }
         } catch (error) {
           console.error('Auth API: Authentication verification failed', error);
+          console.log('Auth API: Document cookies:', document.cookie);
           throw new Error('Login succeeded but authentication verification failed');
         }
       }
