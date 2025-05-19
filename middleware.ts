@@ -16,6 +16,13 @@ export function middleware(request: NextRequest) {
     console.log('[Middleware] Has token:', hasToken);
     console.log('[Middleware] All cookies:', request.cookies.toString());
 
+
+    // Home page redirect
+    if (request.nextUrl.pathname === '/') {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+
     // Check if the request is for the dashboard
     if (request.nextUrl.pathname.startsWith('/dashboard')) {
         if (!hasToken) {
