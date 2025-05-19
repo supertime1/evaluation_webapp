@@ -1,24 +1,29 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuthStore } from '../../lib/auth/store';
+import { authManager } from '@/lib/managers/authManager';
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { loadUser, isLoading } = useAuthStore();
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initAuth = async () => {
-      await loadUser();
-      setIsInitialized(true);
+      setIsLoading(true);
+      try {
+        await authManager.loadUser();
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
     };
 
     initAuth();
-  }, [loadUser]);
+  }, []);
 
   if (!isInitialized) {
     return (

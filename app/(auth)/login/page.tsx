@@ -1,33 +1,79 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/lib/hooks/useAuthManager';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Check for registration success message
+  useEffect(() => {
+    if (searchParams?.get('registered') === 'true') {
+      setSuccess('Account created successfully. Please log in.');
+    }
+  }, [searchParams]);
+  
+  // Check if already authenticated and redirect if needed
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log('Already authenticated, redirecting to dashboard');
+      window.location.href = '/dashboard';
+    }
+    setIsCheckingAuth(false);
+  }, [isAuthenticated]);
+
+  // Update local error state when auth error changes
+  useEffect(() => {
+    if (authError) {
+      setError(authError.message);
+    }
+  }, [authError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setSuccess('');
     
     try {
-      // This would normally call your authentication API
-      console.log('Logging in with:', email, password);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Attempting login with:', email);
       
-      // On success, redirect to dashboard
-      router.push('/');
-    } catch (err) {
-      setError('Login failed. Please check your credentials.');
+      // Use the login method from our auth hook
+      await login({
+        username: email,
+        password,
+      });
+      
+      // If we got this far without errors, redirect to dashboard
+      window.location.href = '/dashboard';
+      
+    } catch (err: any) {
+      console.error('Login error:', err);
+      
+      // Display friendly error message
+      if (err.response) {
+        if (err.response.status === 400 || err.response.status === 401 || err.response.status === 422) {
+          setError('Invalid email or password. Please try again.');
+        } else {
+          setError(err.response.data?.detail || 'Login failed. Please check your credentials.');
+        }
+      } else if (err.request) {
+        setError('Unable to connect to the server. Please try again later.');
+      } else {
+        setError(err.message || 'An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -41,6 +87,12 @@ export default function LoginPage() {
           Enter your credentials to access FortiEval
         </p>
       </div>
+
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm mb-6">
+          {success}
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm mb-6">
@@ -86,9 +138,9 @@ export default function LoginPage() {
         <Button 
           type="submit" 
           className="w-full h-11 bg-slate-900 hover:bg-slate-800 mt-3" 
-          disabled={isLoading}
+          disabled={isLoading || authLoading}
         >
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoading || authLoading ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>
 
