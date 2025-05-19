@@ -30,9 +30,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email: string, password: string) => {
     try {
       set({ isLoading: true, error: null });
-      await authApi.login({ username: email, password });
-      await get().loadUser();
+      console.log('Store: Starting login request');
+      
+      // Login request
+      const result = await authApi.login({ username: email, password });
+      console.log('Store: Login successful, result:', result);
+      
+      // Add delay to ensure cookie is set
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('Store: Delay complete, loading user');
+      
+      // Try to load user data
+      try {
+        await get().loadUser();
+      } catch (userError) {
+        console.error('Store: Error loading user after login:', userError);
+        set({ 
+          error: 'Login succeeded but session verification failed. Please try again.', 
+          isLoading: false,
+          isAuthenticated: false,
+        });
+      }
     } catch (error: any) {
+      console.error('Store: Login error:', error);
       set({ 
         error: error.response?.data?.detail || 'Login failed', 
         isLoading: false,
@@ -70,8 +90,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true });
       const user = await authApi.getCurrentUser();
+      console.log('Store: User loaded successfully:', user);
       set({ user, isAuthenticated: true, isLoading: false });
     } catch (error) {
+      console.error('Store: Error loading user:', error);
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },

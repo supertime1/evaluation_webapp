@@ -6,24 +6,18 @@ export function middleware(request: NextRequest) {
   // Get the path of the request
   const path = request.nextUrl.pathname;
   
-  // Check if the user has an authentication cookie
-  const isAuthenticated = request.cookies.has('fastapiusersauth');
-  
   // Define public paths that don't need authentication
   const isPublicPath = path === '/login' || path === '/register' || path === '/logout' || path === '/';
-
-  // If user is on a public path but is authenticated, redirect to dashboard
-  // Exclude the logout page and homepage from this rule
-  if (isPublicPath && isAuthenticated && path !== '/logout' && path !== '/') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  
+  // Apply middleware logic only for protected paths
+  if (!isPublicPath && !path.startsWith('/api/')) {
+    // Let the client-side auth check handle these routes
+    // The client component will redirect if not authenticated
+    // This avoids issues with cookies/tokens not being properly synced
+    return NextResponse.next();
   }
-
-  // If user is trying to access a protected path without authentication
-  if (!isPublicPath && !isAuthenticated && !path.startsWith('/api/')) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  // Continue with the request
+  
+  // For public paths, just continue
   return NextResponse.next();
 }
 

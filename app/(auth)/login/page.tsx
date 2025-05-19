@@ -22,6 +22,14 @@ export default function LoginPage() {
       setSuccess('Account created successfully. Please log in.');
     }
   }, [searchParams]);
+  
+  // Check if already authenticated on mount
+  useEffect(() => {
+    if (authApi.isAuthenticated()) {
+      console.log('Already authenticated, redirecting to dashboard');
+      window.location.href = '/dashboard';
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,26 +40,25 @@ export default function LoginPage() {
     try {
       console.log('Attempting login with:', email);
       
-      // Call the actual FastAPI endpoint for login
+      // Call the login endpoint
       const result = await authApi.login({
-        username: email, // FastAPI expects 'username' field
+        username: email,
         password,
       });
       
-      console.log('Login successful, result:', result);
+      console.log('Login result:', result);
       
-      // On success, redirect to dashboard
-      router.push('/');
+      // Check if token was set
+      if (authApi.isAuthenticated()) {
+        console.log('Authentication successful, redirecting to dashboard');
+        window.location.href = '/dashboard';
+      } else {
+        console.error('Login succeeded but no token was set');
+        setError('Login succeeded but authentication failed. Please try again.');
+      }
+      
     } catch (err: any) {
-      console.error('Login error details:', {
-        message: err.message,
-        response: err.response ? {
-          status: err.response.status,
-          data: err.response.data,
-          headers: err.response.headers
-        } : 'No response object',
-        request: err.request ? 'Request exists' : 'No request object',
-      });
+      console.error('Login error:', err);
       
       // Display friendly error message
       if (err.response) {
