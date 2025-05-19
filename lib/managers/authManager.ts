@@ -1,19 +1,12 @@
 import { authApi } from '../api/auth';
 
-// Define types
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  is_active: boolean;
-  is_superuser: boolean;
-}
-
+// Login credentials interface
 export interface LoginCredentials {
   username: string;
   password: string;
 }
 
+// Registration data interface
 export interface RegisterData {
   email: string;
   password: string;
@@ -21,43 +14,23 @@ export interface RegisterData {
 }
 
 class AuthManager {
-  private user: User | null = null;
-  private listeners: Set<() => void> = new Set();
-
-  // Check if user is authenticated
+  private isLoggedIn: boolean = false;
+  private authListeners: Set<() => void> = new Set();
+  
+  // Check if authenticated
   isAuthenticated(): boolean {
-    return !!this.user;
+    return this.isLoggedIn;
   }
 
-  // Get current user data
-  getCurrentUser(): User | null {
-    return this.user;
-  }
-
-  // Load user data from the server
-  async loadUser(): Promise<User | null> {
-    try {
-      const user = await authApi.getCurrentUser();
-      this.user = user;
-      this.notifyListeners();
-      return user;
-    } catch (error) {
-      this.user = null;
-      this.notifyListeners();
-      return null;
-    }
-  }
-
-  // Login with username and password
-  async login(credentials: LoginCredentials): Promise<User> {
+  // Login
+  async login(credentials: LoginCredentials): Promise<void> {
     try {
       await authApi.login(credentials);
-      const user = await this.loadUser();
-      if (!user) {
-        throw new Error('Authentication failed');
-      }
-      return user;
+      this.isLoggedIn = true;
+      this.notifyListeners();
     } catch (error) {
+      this.isLoggedIn = false;
+      this.notifyListeners();
       throw error;
     }
   }
@@ -72,31 +45,45 @@ class AuthManager {
     }
   }
 
-  // Logout current user
+  // Logout
   async logout(): Promise<void> {
     try {
       await authApi.logout();
-      this.user = null;
+      this.isLoggedIn = false;
       this.notifyListeners();
     } catch (error) {
-      // Even if logout fails on server, clear user locally
-      this.user = null;
+      // Even if logout fails on server, clear auth state locally
+      this.isLoggedIn = false;
       this.notifyListeners();
       throw error;
     }
   }
 
+  // Check auth status on init or after page refresh
+  async checkAuthStatus(): Promise<boolean> {
+    try {
+      const isAuthenticated = await authApi.isAuthenticated();
+      this.isLoggedIn = isAuthenticated;
+      this.notifyListeners();
+      return isAuthenticated;
+    } catch (error) {
+      this.isLoggedIn = false;
+      this.notifyListeners();
+      return false;
+    }
+  }
+
   // Subscribe to auth state changes
-  subscribe(listener: () => void): () => void {
-    this.listeners.add(listener);
+  subscribeToAuth(listener: () => void): () => void {
+    this.authListeners.add(listener);
     return () => {
-      this.listeners.delete(listener);
+      this.authListeners.delete(listener);
     };
   }
 
   // Notify all listeners of state change
   private notifyListeners(): void {
-    this.listeners.forEach(listener => listener());
+    this.authListeners.forEach(listener => listener());
   }
 }
 

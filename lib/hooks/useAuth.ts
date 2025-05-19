@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { authManager, User, LoginCredentials, RegisterData } from '../managers/authManager';
+import { authManager, LoginCredentials, RegisterData } from '../managers/authManager';
 
 interface UseAuthReturn {
-  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: Error | null;
@@ -13,25 +12,25 @@ interface UseAuthReturn {
 }
 
 export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<User | null>(authManager.getCurrentUser());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authManager.isAuthenticated());
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     // Subscribe to auth state changes
-    const unsubscribe = authManager.subscribe(() => {
-      setUser(authManager.getCurrentUser());
+    const unsubscribe = authManager.subscribeToAuth(() => {
+      setIsAuthenticated(authManager.isAuthenticated());
     });
 
-    // Load user on initial mount if not already loaded
-    if (!user) {
+    // Check auth status on mount
+    if (!isAuthenticated) {
       setIsLoading(true);
-      authManager.loadUser()
+      authManager.checkAuthStatus()
         .finally(() => setIsLoading(false));
     }
 
     return unsubscribe;
-  }, [user]);
+  }, [isAuthenticated]);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
@@ -80,8 +79,7 @@ export function useAuth(): UseAuthReturn {
   };
 
   return {
-    user,
-    isAuthenticated: !!user,
+    isAuthenticated,
     isLoading,
     error,
     login,
@@ -93,18 +91,17 @@ export function useAuth(): UseAuthReturn {
 
 // For components that only need to check auth status without functionality
 export function useAuthStatus() {
-  const [user, setUser] = useState<User | null>(authManager.getCurrentUser());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authManager.isAuthenticated());
   
   useEffect(() => {
-    const unsubscribe = authManager.subscribe(() => {
-      setUser(authManager.getCurrentUser());
+    const unsubscribe = authManager.subscribeToAuth(() => {
+      setIsAuthenticated(authManager.isAuthenticated());
     });
     
     return unsubscribe;
   }, []);
   
   return {
-    user,
-    isAuthenticated: !!user
+    isAuthenticated
   };
 } 

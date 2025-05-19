@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/lib/hooks/useAuthManager';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { useUser } from '@/lib/hooks/useUser';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
+  const { loadUser } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -50,11 +52,14 @@ export default function LoginPage() {
     try {
       console.log('Attempting login with:', email);
       
-      // Use the login method from our auth hook
+      // Log in first
       await login({
         username: email,
         password,
       });
+      
+      // Then load user data
+      await loadUser();
       
       // If we got this far without errors, redirect to dashboard
       window.location.href = '/dashboard';

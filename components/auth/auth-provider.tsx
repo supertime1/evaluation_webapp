@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { authManager } from '@/lib/managers/authManager';
+import { userManager } from '@/lib/managers/userManager';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -15,7 +15,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initAuth = async () => {
       setIsLoading(true);
       try {
-        await authManager.loadUser();
+        // Initialize user first - this will check auth status and load user data
+        await userManager.initializeUser();
       } finally {
         setIsLoading(false);
         setIsInitialized(true);
