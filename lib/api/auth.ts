@@ -1,5 +1,7 @@
 import { networkManager } from '../managers/networkManager';
 
+const API_PATH = '/api/v1/auth';
+
 interface LoginCredentials {
   username: string;  // FastAPI expects 'username', even though we're using email
   password: string;
@@ -34,7 +36,7 @@ export const authApi = {
       clearAuthState();
       
       const apiClient = networkManager.getApiClient();
-      const response = await apiClient.post('/api/v1/auth/jwt/login', formData, {
+      const response = await apiClient.post(`${API_PATH}/jwt/login`, formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -78,7 +80,7 @@ export const authApi = {
 
   register: async (data: RegisterData) => {
     try {
-      const response = await networkManager.getApiClient().post('/api/v1/auth/register', data, {
+      const response = await networkManager.getApiClient().post(`${API_PATH}/register`, data, {
         withCredentials: true
       });
       return response.data;
@@ -91,7 +93,7 @@ export const authApi = {
   logout: async () => {
     try {
       // This will clear FastAPI's HTTP-only cookies
-      const response = await networkManager.getApiClient().post('/api/v1/auth/jwt/logout', {}, {
+      const response = await networkManager.getApiClient().post(`${API_PATH}/jwt/logout`, {}, {
         withCredentials: true
       });
       // No need to clear localStorage, just make sure header is clean
@@ -109,7 +111,7 @@ export const authApi = {
       console.log('Auth API: Fetching current user');
       
       // Always use withCredentials to send HTTP-only cookies
-      const response = await networkManager.getApiClient().get('/api/v1/users/me', { 
+      const response = await networkManager.getApiClient().get(`${API_PATH}/users/me`, { 
         withCredentials: true 
       });
       

@@ -1,7 +1,13 @@
 import Dexie, { Table } from 'dexie';
-import { ExperimentEntity, RunEntity, TestCaseEntity, TestResultEntity } from '../models';
+import { 
+  ExperimentEntity, 
+  RunEntity, 
+  TestCaseEntity, 
+  TestResultEntity 
+} from '@/lib/models';
 
 class EvaluationDB extends Dexie {
+  // Define tables
   experiments!: Table<ExperimentEntity, string>;
   runs!: Table<RunEntity, string>;
   testCases!: Table<TestCaseEntity, string>;
@@ -9,15 +15,13 @@ class EvaluationDB extends Dexie {
   
   constructor() {
     super('EvaluationDB');
-
-    // ----------------------------------------------------------------------
-    // 1) Define all versions and their schemas
-    // ----------------------------------------------------------------------
+    
+    // Define table schemas
     this.version(1).stores({
-      experiments: '&id, name, user_id, created_at',
-      runs: '&id, experiment_id, created_at',
-      testCases: '&id, name, type, user_id',
-      testResults: '&id, run_id, test_case_id'
+      experiments: 'id, name, user_id',
+      runs: 'id, experiment_id, status',
+      testCases: 'id, name, type, user_id, is_global',
+      testResults: 'id, run_id, test_case_id'
     });
 
     // ----------------------------------------------------------------------
@@ -70,5 +74,5 @@ class EvaluationDB extends Dexie {
     
   }
 
-
+// Create and export database instance
 export const db = new EvaluationDB(); 
