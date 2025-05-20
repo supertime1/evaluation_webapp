@@ -29,12 +29,12 @@ export default function SideNav() {
         className="flex h-20 items-center gap-2 px-6 border-b border-slate-200"
         href="/dashboard"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Image
             src="/logomark.svg"
             alt="FortiEval"
-            width={42}
-            height={42}
+            width={50}
+            height={50}
           />
           <span className="text-lg font-semibold text-slate-900">
             FortiEval
