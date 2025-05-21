@@ -233,45 +233,38 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
                             }}
                           >
                             <div className="flex items-center">
-                              <div className="flex flex-col items-center mr-3">
-                                <div 
-                                  className="w-1 h-12 rounded-full" 
-                                  style={{ backgroundColor: color }}
-                                />
-                              </div>
+                              <div
+                                className="w-3 h-3 rounded-full mr-3 flex-shrink-0" 
+                                style={{ backgroundColor: color }}
+                              />
                               <div>
                                 <div className="font-medium">{metric.name}</div>
                                 {metric.evaluationModel && (
                                   <div className="text-xs text-slate-500">
-                                    {metric.evaluationModel}
+                                    ({metric.evaluationModel})
                                   </div>
                                 )}
                               </div>
                             </div>
-                            <div className="flex flex-col items-end">
-                              <div className="font-medium mb-1">
-                                {metric.average.toFixed(2)}
-                              </div>
-                              <div className="flex items-center text-xs">
-                                {isSignificant ? (
-                                  isUp ? (
-                                    <span className="flex items-center text-green-600">
-                                      <ArrowUpIcon className="h-3.5 w-3.5 mr-1" />
-                                      +{Math.abs(trendValue).toFixed(2)}%
-                                    </span>
-                                  ) : (
-                                    <span className="flex items-center text-red-600">
-                                      <ArrowDownIcon className="h-3.5 w-3.5 mr-1" />
-                                      -{Math.abs(trendValue).toFixed(2)}%
-                                    </span>
-                                  )
-                                ) : (
-                                  <span className="flex items-center text-slate-500">
-                                    <MinusIcon className="h-3.5 w-3.5 mr-1" />
-                                    0.00%
+                            <div className="flex items-center">
+                              {isSignificant ? (
+                                isUp ? (
+                                  <span className="flex items-center text-green-600">
+                                    <ArrowUpIcon className="h-3.5 w-3.5 mr-1" />
+                                    +{Math.abs(trendValue).toFixed(2)}%
                                   </span>
-                                )}
-                              </div>
+                                ) : (
+                                  <span className="flex items-center text-red-600">
+                                    <ArrowDownIcon className="h-3.5 w-3.5 mr-1" />
+                                    -{Math.abs(trendValue).toFixed(2)}%
+                                  </span>
+                                )
+                              ) : (
+                                <span className="flex items-center text-slate-500">
+                                  <MinusIcon className="h-3.5 w-3.5 mr-1" />
+                                  0.00%
+                                </span>
+                              )}
                             </div>
                           </div>
                         );

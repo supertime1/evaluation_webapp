@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useExperiment } from '@/lib/hooks/useExperimentManager';
 import { useRun, useRunWithResults } from '@/lib/hooks/useRunManager';
+import { useTestCase } from '@/lib/hooks/useTestCaseManager';
 import { ArrowLeftIcon, ClockIcon, XCircleIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { use } from 'react';
+import { MetricData } from '@/lib/schemas/testResult';
 
 export default function RunDetailPage({ params }: { params: Promise<{ id: string; runId: string }> }) {
   const router = useRouter();
@@ -45,6 +47,16 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
       <CheckCircleIcon className="h-5 w-5 text-green-500" /> : 
       <XCircleIcon className="h-5 w-5 text-red-500" />;
   };
+
+  // Get a metric badge component based on success status
+  const getMetricBadge = (metric: MetricData) => {
+    const bgColor = metric.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+    return (
+      <span className={`${bgColor} text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1 inline-block`}>
+        {metric.name}: {metric.score.toFixed(2)}
+      </span>
+    );
+  };
   
   if (isLoading) {
     return (
@@ -70,17 +82,9 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
     );
   }
   
-  // For demo purposes, since we don't have real data yet
   const totalTests = runWithResults.test_results?.length || 0;
   const passingTests = runWithResults.test_results?.filter(test => test.success).length || 0;
   const passRate = totalTests > 0 ? (passingTests / totalTests) * 100 : 0;
-  
-  // For demo purposes - we'll generate some fake metrics
-  const mockMetrics = [
-    { name: 'Accuracy', score: 0.85, threshold: 0.8, success: true },
-    { name: 'Completeness', score: 0.73, threshold: 0.7, success: true },
-    { name: 'Relevancy', score: 0.68, threshold: 0.7, success: false },
-  ];
   
   return (
     <div className="p-6 space-y-6">
@@ -209,35 +213,34 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Just showing mock data since we don't have actual test results yet */}
-                    <tr className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-6 py-4">
-                        <span className="flex items-center">
-                          <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-medium">Capital of France</td>
-                      <td className="px-6 py-4 max-w-xs truncate">What is the capital of France?</td>
-                      <td className="px-6 py-4">Paris</td>
-                      <td className="px-6 py-4 max-w-xs truncate">The capital of France is Paris.</td>
-                      <td className="px-6 py-4">
-                        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Accuracy: 0.95</span>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-slate-200 hover:bg-slate-50">
-                      <td className="px-6 py-4">
-                        <span className="flex items-center">
-                          <XCircleIcon className="h-5 w-5 text-red-500" />
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-medium">Population of Italy</td>
-                      <td className="px-6 py-4 max-w-xs truncate">What is the population of Italy?</td>
-                      <td className="px-6 py-4">59.11 million (2021)</td>
-                      <td className="px-6 py-4 max-w-xs truncate">Italy has a population of approximately 60.3 million people.</td>
-                      <td className="px-6 py-4">
-                        <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">Accuracy: 0.65</span>
-                      </td>
-                    </tr>
+                    {runWithResults.test_results.map(result => (
+                      <tr key={result.id} className="border-b border-slate-200 hover:bg-slate-50">
+                        <td className="px-6 py-4">
+                          <span className="flex items-center">
+                            {getTestResultStatusIcon(result.success)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-medium">{result.name}</td>
+                        <td className="px-6 py-4 max-w-xs truncate">
+                          {typeof result.input === 'string' ? result.input : JSON.stringify(result.input)}
+                        </td>
+                        <td className="px-6 py-4">{result.expected_output}</td>
+                        <td className="px-6 py-4 max-w-xs truncate">
+                          {typeof result.actual_output === 'string' ? result.actual_output : JSON.stringify(result.actual_output)}
+                        </td>
+                        <td className="px-6 py-4 flex flex-wrap">
+                          {result.metrics_data && result.metrics_data.length > 0 ? (
+                            result.metrics_data.map((metric, index) => (
+                              <span key={index}>
+                                {getMetricBadge(metric)}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-slate-400">No metrics</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -258,29 +261,68 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
             <CardDescription>Overall metrics for this evaluation run</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {mockMetrics.map((metric) => (
-                <Card key={metric.name} className={`border-l-4 ${metric.success ? 'border-l-green-500' : 'border-l-red-500'}`}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">{metric.name}</CardTitle>
-                    <CardDescription>
-                      Threshold: {metric.threshold.toFixed(2)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">
-                      {metric.score.toFixed(2)}
-                    </div>
-                    <div className="mt-2 h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full ${metric.success ? 'bg-green-500' : 'bg-red-500'}`}
-                        style={{ width: `${metric.score * 100}%` }}
-                      ></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {runWithResults.test_results && runWithResults.test_results.some(result => result.metrics_data && result.metrics_data.length > 0) ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Group and aggregate metrics from all test results */}
+                {(() => {
+                  // Extract all metrics from test results
+                  const allMetrics: MetricData[] = [];
+                  runWithResults.test_results.forEach(result => {
+                    if (result.metrics_data) {
+                      allMetrics.push(...result.metrics_data);
+                    }
+                  });
+                  
+                  // Group metrics by name
+                  const metricsByName: Record<string, MetricData[]> = {};
+                  allMetrics.forEach(metric => {
+                    if (!metricsByName[metric.name]) {
+                      metricsByName[metric.name] = [];
+                    }
+                    metricsByName[metric.name].push(metric);
+                  });
+                  
+                  // Calculate averages for each metric type
+                  return Object.entries(metricsByName).map(([name, metrics]) => {
+                    const totalScore = metrics.reduce((sum, metric) => sum + metric.score, 0);
+                    const avgScore = totalScore / metrics.length;
+                    const successCount = metrics.filter(m => m.success).length;
+                    const successRate = (successCount / metrics.length) * 100;
+                    // Use threshold from first metric (assuming all thresholds are the same for a metric type)
+                    const threshold = metrics[0]?.threshold || 0;
+                    
+                    return (
+                      <Card key={name} className={`border-l-4 ${successRate >= 50 ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">{name}</CardTitle>
+                          <CardDescription>
+                            {metrics.length} test cases | Threshold: {threshold.toFixed(2)}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-3xl font-bold">
+                            {avgScore.toFixed(2)}
+                          </div>
+                          <div className="mt-2 h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${successRate >= 50 ? 'bg-green-500' : 'bg-red-500'}`}
+                              style={{ width: `${avgScore * 100}%` }}
+                            ></div>
+                          </div>
+                          <div className="mt-1 text-sm text-slate-500">
+                            {successCount} of {metrics.length} passed ({successRate.toFixed(1)}%)
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  });
+                })()}
+              </div>
+            ) : (
+              <div className="text-center py-10 text-slate-500">
+                <p>No metrics data available for this run</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
