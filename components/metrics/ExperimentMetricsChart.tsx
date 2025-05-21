@@ -21,11 +21,12 @@ type MetricsChartProps = {
   experimentId: string;
 };
 
-type MetricData = {
+interface ChartDataPoint {
   name: string;
   runId: string;
-  [key: string]: string | number | null;
-};
+  timestamp: number;
+  [key: string]: string | number | undefined;
+}
 
 const COLORS = [
   '#3b82f6', // blue
@@ -87,12 +88,12 @@ export function ExperimentMetricsChart({ runs, experimentId }: MetricsChartProps
     const uniqueMetricNames = extractUniqueMetricNames(allTestResults);
     
     // Create chart data for each run
-    const chartData: MetricData[] = runs.map(run => {
+    const chartData: ChartDataPoint[] = runs.map(run => {
       // Create a short run ID for display
       const shortId = run.id.slice(0, 6);
       
       // Default data object with run info
-      const dataPoint: MetricData = {
+      const dataPoint: ChartDataPoint = {
         name: shortId,
         runId: run.id,
         timestamp: new Date(run.created_at).getTime(),
@@ -105,7 +106,12 @@ export function ExperimentMetricsChart({ runs, experimentId }: MetricsChartProps
         
         // Add each metric's average to the data point
         metricStats.forEach(stat => {
-          dataPoint[stat.name] = stat.average;
+          // Only add valid numeric values
+          if (typeof stat.average === 'number' && !isNaN(stat.average)) {
+            // Make sure we have a valid value in the range 0-1
+            const validValue = Math.max(0, Math.min(1, stat.average));
+            dataPoint[stat.name] = validValue;
+          }
         });
       }
       
@@ -113,9 +119,19 @@ export function ExperimentMetricsChart({ runs, experimentId }: MetricsChartProps
     });
     
     // Sort by creation date (newest runs last so they appear on the right)
-    chartData.sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
+    chartData.sort((a, b) => a.timestamp - b.timestamp);
     
-    return { chartData, metricNames: uniqueMetricNames };
+    // Filter out any metric names that don't have valid data
+    const validMetricNames = uniqueMetricNames.filter(metricName => 
+      chartData.some(point => 
+        typeof point[metricName] === 'number' && !isNaN(point[metricName] as number)
+      )
+    );
+    
+    return { 
+      chartData, 
+      metricNames: validMetricNames 
+    };
   }, [runs, allTestResults]);
   
   // If no data, show a placeholder message

@@ -5,17 +5,36 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useExperiment } from '@/lib/hooks/useExperimentManager';
 import { useExperimentRuns } from '@/lib/hooks/useRunManager';
-import { ArrowLeftIcon, ClockIcon, XCircleIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ClockIcon, XCircleIcon, CheckCircleIcon, ArrowPathIcon, ArrowUpIcon, ArrowDownIcon, MinusIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExperimentMetricsChart } from '@/components/metrics/ExperimentMetricsChart';
-import { MetricsSummaryCard } from '@/components/metrics/MetricsSummaryCard';
+import { ExperimentMetricsChart, MetricsSummaryCard } from '@/components/metrics';
 import { useQuery } from '@tanstack/react-query';
 import { testResultManager } from '@/lib/managers/testResultManager';
 import { TestResultEntity } from '@/lib/models';
+import { calculateMetricStats, calculateMetricTrends, MetricStats } from '@/lib/utils/metrics';
 import { use } from 'react';
+
+// Helper function to get a color for a metric based on its name
+function getMetricColor(metricName: string): string {
+  // Set of predefined colors for different metrics
+  const colorMap: Record<string, string> = {
+    'Concision': '#3b82f6', // blue
+    'Completeness': '#6366f1', // indigo
+    'Relevancy': '#8b5cf6', // purple
+    'Answer Relevancy': '#8b5cf6', // purple
+    'Correctness': '#ec4899', // pink
+    'Factual Accuracy': '#f43f5e', // rose
+    'Helpfulness': '#f97316', // orange
+    'Coherence': '#eab308', // yellow
+    'Safety': '#10b981', // emerald
+  };
+  
+  // Return mapped color or a default if not found
+  return colorMap[metricName] || '#64748b'; // slate as default
+}
 
 export default function ExperimentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -170,85 +189,93 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
       {/* Overview tab content */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Metrics chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Metrics Trends</CardTitle>
-              <CardDescription>Performance metrics across recent runs</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80 w-full">
-                <ExperimentMetricsChart runs={runs || []} experimentId={experimentId} />
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Metrics summary */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Metrics summary card */}
-            <MetricsSummaryCard 
-              testResults={allTestResults} 
-              title="Metrics Summary" 
-            />
-            
-            {/* Latest run metrics - if available */}
-            {runs && runs.length > 0 && (
+          {/* Metrics grid: summary and trend cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Metrics chart in the larger space */}
+            <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
-                  <CardTitle>Latest Run Performance</CardTitle>
-                  <CardDescription>
-                    Key metrics from the most recent evaluation run
-                  </CardDescription>
+                  <CardTitle>Metric Data</CardTitle>
+                  <CardDescription>Using evaluation data from {runs?.length || 0} displayed test runs (error bar = 1 SD)</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-slate-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-slate-500 mb-1">Status</div>
-                      <div className="flex items-center justify-center">
-                        {getRunStatusIcon(runs[0].status)}
-                        <span className="ml-2 font-medium capitalize">
-                          {runs[0].status}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-slate-500 mb-1">Created</div>
-                      <div className="font-medium">
-                        {formatDistanceToNow(new Date(runs[0].created_at), { addSuffix: true })}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-slate-500 mb-1">Success Rate</div>
-                      <div className="font-medium">
-                        {allTestResults.length > 0 ? 
-                          `${((allTestResults.filter(r => r.success).length / allTestResults.length) * 100).toFixed(1)}%`
-                          : 'N/A'}
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-50 rounded-lg p-4 text-center">
-                      <div className="text-sm text-slate-500 mb-1">Tests</div>
-                      <div className="font-medium">
-                        {allTestResults.length}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 text-center">
-                    <Button 
-                      variant="outline" 
-                      className="text-sm"
-                      onClick={() => handleRunClick(runs[0].id)}
-                    >
-                      View Run Details
-                    </Button>
+                  <div className="h-80 w-full">
+                    <ExperimentMetricsChart runs={runs || []} experimentId={experimentId} />
                   </div>
                 </CardContent>
               </Card>
-            )}
+            </div>
+            
+            {/* Metrics trend card */}
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Metric Trends</CardTitle>
+                  <CardDescription>% change in metric scores for the {Math.min(7, runs?.length || 0)} most recent test runs</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {allTestResults.length > 0 ? (
+                    <div className="space-y-3">
+                      {calculateMetricStats(allTestResults).map((metric) => {
+                        const trend = calculateMetricTrends(allTestResults, 1, 5)[metric.name];
+                        const trendValue = trend !== undefined && !isNaN(trend) ? trend : 0;
+                        const isUp = trendValue > 0;
+                        const isSignificant = Math.abs(trendValue) >= 0.5;
+                        
+                        return (
+                          <div 
+                            key={metric.name}
+                            className="bg-slate-50 rounded-lg p-4 flex items-center justify-between"
+                          >
+                            <div className="flex items-center">
+                              <div 
+                                className="w-1 h-12 mr-3 rounded-full" 
+                                style={{ backgroundColor: getMetricColor(metric.name) }}
+                              />
+                              <span className="font-medium">{metric.name}</span>
+                              {metric.evaluationModel && (
+                                <span className="text-xs text-slate-500 ml-2">({metric.evaluationModel})</span>
+                              )}
+                            </div>
+                            <div className="flex items-center">
+                              {isSignificant ? (
+                                isUp ? (
+                                  <span className="flex items-center text-green-600">
+                                    <ArrowUpIcon className="h-4 w-4 mr-1" />
+                                    +{Math.abs(trendValue).toFixed(2)}%
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center text-red-600">
+                                    <ArrowDownIcon className="h-4 w-4 mr-1" />
+                                    -{Math.abs(trendValue).toFixed(2)}%
+                                  </span>
+                                )
+                              ) : (
+                                <span className="flex items-center text-slate-500">
+                                  <MinusIcon className="h-4 w-4 mr-1" />
+                                  0.00%
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 text-slate-500">
+                      No metric trend data available.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
+          
+          {/* Metrics summary */}
+          <MetricsSummaryCard 
+            testResults={allTestResults} 
+            title="Metrics Summary" 
+          />
           
           {/* Recent runs */}
           <Card>
