@@ -82,13 +82,13 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
               <ArrowPathIcon className="h-4 w-4 mr-2" />
               Sync
             </Button>
-            <Button 
+            {/* <Button 
               className="h-10 bg-slate-900 hover:bg-slate-800 text-white"
               onClick={() => router.push(`/dashboard/experiments/${experimentId}/runs/new`)}
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               New Run
-            </Button>
+            </Button> */}
           </div>
         </div>
         
