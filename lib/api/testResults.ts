@@ -3,6 +3,7 @@ import {
   TestResult 
 } from '@/lib/schemas/testResult';
 import { apiClient } from './client';
+import { RunWithResults } from '../schemas/run';
 
 const API_PATH = '/api/v1/test-results';
 
@@ -34,8 +35,9 @@ export const getTestResult = async (id: string): Promise<TestResult> => {
  * Get all test results for a specific run
  */
 export const getTestResultsByRun = async (runId: string): Promise<TestResult[]> => {
-  const response = await apiClient.get(`/api/v1/runs/${runId}/test-results`);
-  return response.data;
+  const response = await apiClient.get(`/api/v1/runs/${runId}`);
+  const runWithResults = response.data as RunWithResults;
+  return runWithResults.test_results || [];
 };
 
 /**

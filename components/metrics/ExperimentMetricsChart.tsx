@@ -10,14 +10,15 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts';
-import { RunEntity } from '@/lib/models';
-import { useRouter } from 'next/navigation';
+import { RunEntity, TestResultEntity } from '@/lib/models';
+import { extractUniqueMetricNames, calculateMetricStats } from '@/lib/utils/metrics';
+import { useQuery } from '@tanstack/react-query';
+import { testResultManager } from '@/lib/managers/testResultManager';
 
 type MetricsChartProps = {
   runs: RunEntity[];
-  experimentId?: string;
+  experimentId: string;
 };
 
 type MetricData = {
@@ -26,64 +27,102 @@ type MetricData = {
   [key: string]: string | number | null;
 };
 
-const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 border border-slate-200 shadow-md rounded-md">
-        <p className="text-slate-800 font-medium mb-2">Run: {label}</p>
-        {payload.map((entry, index) => (
-          <div key={index} className="flex items-center text-sm mb-1">
-            <div 
-              className="w-3 h-3 rounded-full mr-2" 
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="font-medium">{entry.name}: </span>
-            <span className="ml-1">{Number(entry.value).toFixed(2)}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-  return null;
-};
+const COLORS = [
+  '#3b82f6', // blue
+  '#6366f1', // indigo
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#f43f5e', // rose
+  '#f97316', // orange
+  '#eab308', // yellow
+  '#10b981', // emerald
+];
 
 export function ExperimentMetricsChart({ runs, experimentId }: MetricsChartProps) {
-  const router = useRouter();
+  // Get all run IDs
+  const runIds = runs.map(run => run.id);
   
-  // Convert runs to chart data
-  const data = useMemo(() => {
-    // For demo, generate some fake metrics data since we don't have real metrics yet
-    return runs.map((run, index) => {
-      // Simulate metric scores with slight variations
-      const baseAccuracy = 0.75 + Math.random() * 0.1;
-      const baseCompleteness = 0.7 + Math.random() * 0.15;
-      const baseRelevancy = 0.8 + Math.random() * 0.1;
+  // Fetch test results for all runs
+  const { data: allTestResults = [] } = useQuery({
+    queryKey: ['testResultsForRuns', runIds],
+    queryFn: async () => {
+      if (runIds.length === 0) return [];
       
-      // Create a short run ID for display
-      const shortId = run.id.split('_')[1] || run.id;
+      // Collect all test results from all runs
+      let allResults: TestResultEntity[] = [];
       
-      return {
-        name: shortId,
-        accuracy: parseFloat(baseAccuracy.toFixed(2)),
-        completeness: parseFloat(baseCompleteness.toFixed(2)),
-        relevancy: parseFloat(baseRelevancy.toFixed(2)),
-        runId: run.id,
-      };
-    }).reverse(); // Show most recent runs first
-  }, [runs]);
+      // Process each run to get its test results
+      for (const runId of runIds) {
+        try {
+          const runResults = await testResultManager.getTestResultsByRun(runId);
+          if (runResults && runResults.length > 0) {
+            allResults = [...allResults, ...runResults];
+          }
+        } catch (error) {
+          console.error(`Error fetching test results for run ${runId}:`, error);
+        }
+      }
+      
+      return allResults;
+    },
+    enabled: runIds.length > 0
+  });
   
-  // Handle click on a data point to navigate to the run details
-  const handleDataPointClick = (data: MetricData) => {
-    if (data && data.runId && experimentId) {
-      router.push(`/dashboard/experiments/${experimentId}/runs/${data.runId}`);
+  // Process data for the chart
+  const { chartData, metricNames } = useMemo(() => {
+    if (runs.length === 0 || !allTestResults || allTestResults.length === 0) {
+      return { chartData: [], metricNames: [] };
     }
-  };
+    
+    // Group test results by run
+    const resultsByRun: Record<string, TestResultEntity[]> = {};
+    allTestResults.forEach((result: TestResultEntity) => {
+      if (!resultsByRun[result.run_id]) {
+        resultsByRun[result.run_id] = [];
+      }
+      resultsByRun[result.run_id].push(result);
+    });
+    
+    // Get all unique metric names across all test results
+    const uniqueMetricNames = extractUniqueMetricNames(allTestResults);
+    
+    // Create chart data for each run
+    const chartData: MetricData[] = runs.map(run => {
+      // Create a short run ID for display
+      const shortId = run.id.slice(0, 6);
+      
+      // Default data object with run info
+      const dataPoint: MetricData = {
+        name: shortId,
+        runId: run.id,
+        timestamp: new Date(run.created_at).getTime(),
+      };
+      
+      // Add metric averages if we have test results for this run
+      const runResults = resultsByRun[run.id] || [];
+      if (runResults.length > 0) {
+        const metricStats = calculateMetricStats(runResults);
+        
+        // Add each metric's average to the data point
+        metricStats.forEach(stat => {
+          dataPoint[stat.name] = stat.average;
+        });
+      }
+      
+      return dataPoint;
+    });
+    
+    // Sort by creation date (newest runs last so they appear on the right)
+    chartData.sort((a, b) => (a.timestamp as number) - (b.timestamp as number));
+    
+    return { chartData, metricNames: uniqueMetricNames };
+  }, [runs, allTestResults]);
   
   // If no data, show a placeholder message
-  if (data.length === 0) {
+  if (chartData.length === 0 || metricNames.length === 0) {
     return (
       <div className="h-full w-full flex items-center justify-center text-slate-500">
-        No metrics data available yet. Runs are automatically created by the LLM system.
+        No metrics data available yet. Runs with test results are needed to generate metrics.
       </div>
     );
   }
@@ -91,17 +130,12 @@ export function ExperimentMetricsChart({ runs, experimentId }: MetricsChartProps
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart
-        data={data}
+        data={chartData}
         margin={{
           top: 20,
           right: 30,
           left: 20,
           bottom: 20,
-        }}
-        onClick={(props) => {
-          if (props && props.activePayload && props.activePayload[0]) {
-            handleDataPointClick(props.activePayload[0].payload as MetricData);
-          }
         }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -116,40 +150,32 @@ export function ExperimentMetricsChart({ runs, experimentId }: MetricsChartProps
           tick={{ fontSize: 12 }}
           tickLine={{ stroke: '#9ca3af' }}
         />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend 
-          layout="vertical" 
-          align="left"
-          verticalAlign="middle"
-          wrapperStyle={{ paddingRight: 20 }}
+        <Tooltip 
+          formatter={(value: number) => [value !== undefined ? value.toFixed(2) : 'N/A', '']}
+          labelFormatter={(label) => `Run: ${label}`}
+          contentStyle={{ 
+            backgroundColor: 'white',
+            borderColor: '#e5e7eb',
+            borderRadius: '0.375rem',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+          }}
         />
-        <Line
-          type="monotone"
-          dataKey="accuracy"
-          stroke="#3b82f6"
-          strokeWidth={2}
-          dot={{ r: 4, cursor: 'pointer' }}
-          activeDot={{ r: 6, cursor: 'pointer' }}
-          name="Accuracy"
-        />
-        <Line
-          type="monotone"
-          dataKey="completeness"
-          stroke="#6366f1"
-          strokeWidth={2}
-          dot={{ r: 4, cursor: 'pointer' }}
-          activeDot={{ r: 6, cursor: 'pointer' }}
-          name="Completeness"
-        />
-        <Line
-          type="monotone"
-          dataKey="relevancy"
-          stroke="#8b5cf6"
-          strokeWidth={2}
-          dot={{ r: 4, cursor: 'pointer' }}
-          activeDot={{ r: 6, cursor: 'pointer' }}
-          name="Relevancy"
-        />
+        <Legend />
+        
+        {/* Dynamically generate lines for each metric */}
+        {metricNames.map((metricName, index) => (
+          <Line
+            key={metricName}
+            type="monotone"
+            dataKey={metricName}
+            stroke={COLORS[index % COLORS.length]}
+            strokeWidth={2}
+            dot={{ r: 4 }}
+            activeDot={{ r: 6 }}
+            name={metricName}
+            connectNulls={true}
+          />
+        ))}
       </LineChart>
     </ResponsiveContainer>
   );

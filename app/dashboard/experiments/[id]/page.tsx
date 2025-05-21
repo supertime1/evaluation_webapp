@@ -10,8 +10,11 @@ import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MetricTrendsV2 } from '@/components/metrics/MetricTrendsV2';
-import { MetricBreakdown } from '@/components/metrics/MetricBreakdown';
+import { ExperimentMetricsChart } from '@/components/metrics/ExperimentMetricsChart';
+import { MetricsSummaryCard } from '@/components/metrics/MetricsSummaryCard';
+import { useQuery } from '@tanstack/react-query';
+import { testResultManager } from '@/lib/managers/testResultManager';
+import { TestResultEntity } from '@/lib/models';
 import { use } from 'react';
 
 export default function ExperimentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,6 +28,33 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
   
   const isLoading = isExperimentLoading || isRunsLoading;
   const error = experimentError || runsError;
+  
+  // Fetch all test results for this experiment's runs
+  const runIds = runs?.map(run => run.id) || [];
+  const { data: allTestResults = [] } = useQuery({
+    queryKey: ['testResultsForExperiment', experimentId],
+    queryFn: async () => {
+      if (runIds.length === 0) return [];
+      
+      // Collect all test results from all runs
+      let allResults: TestResultEntity[] = [];
+      
+      // Process each run to get its test results
+      for (const runId of runIds) {
+        try {
+          const runResults = await testResultManager.getTestResultsByRun(runId);
+          if (runResults && runResults.length > 0) {
+            allResults = [...allResults, ...runResults];
+          }
+        } catch (error) {
+          console.error(`Error fetching test results for run ${runId}:`, error);
+        }
+      }
+      
+      return allResults;
+    },
+    enabled: runIds.length > 0
+  });
   
   // Get status icon for run
   const getRunStatusIcon = (status: string) => {
@@ -83,6 +113,13 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
               <ArrowPathIcon className="h-4 w-4 mr-2" />
               Sync
             </Button>
+            {/* <Button 
+              className="h-10 bg-slate-900 hover:bg-slate-800 text-white"
+              onClick={() => router.push(`/dashboard/experiments/${experimentId}/runs/new`)}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              New Run
+            </Button> */}
           </div>
         </div>
         
@@ -134,10 +171,84 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Metrics chart */}
-          <MetricTrendsV2 runs={runs || []} experimentId={experimentId} />
+          <Card>
+            <CardHeader>
+              <CardTitle>Metrics Trends</CardTitle>
+              <CardDescription>Performance metrics across recent runs</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80 w-full">
+                <ExperimentMetricsChart runs={runs || []} experimentId={experimentId} />
+              </div>
+            </CardContent>
+          </Card>
           
-          {/* Metrics breakdown */}
-          <MetricBreakdown runs={runs || []} />
+          {/* Metrics summary */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Metrics summary card */}
+            <MetricsSummaryCard 
+              testResults={allTestResults} 
+              title="Metrics Summary" 
+            />
+            
+            {/* Latest run metrics - if available */}
+            {runs && runs.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Latest Run Performance</CardTitle>
+                  <CardDescription>
+                    Key metrics from the most recent evaluation run
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <div className="text-sm text-slate-500 mb-1">Status</div>
+                      <div className="flex items-center justify-center">
+                        {getRunStatusIcon(runs[0].status)}
+                        <span className="ml-2 font-medium capitalize">
+                          {runs[0].status}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <div className="text-sm text-slate-500 mb-1">Created</div>
+                      <div className="font-medium">
+                        {formatDistanceToNow(new Date(runs[0].created_at), { addSuffix: true })}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <div className="text-sm text-slate-500 mb-1">Success Rate</div>
+                      <div className="font-medium">
+                        {allTestResults.length > 0 ? 
+                          `${((allTestResults.filter(r => r.success).length / allTestResults.length) * 100).toFixed(1)}%`
+                          : 'N/A'}
+                      </div>
+                    </div>
+                    
+                    <div className="bg-slate-50 rounded-lg p-4 text-center">
+                      <div className="text-sm text-slate-500 mb-1">Tests</div>
+                      <div className="font-medium">
+                        {allTestResults.length}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 text-center">
+                    <Button 
+                      variant="outline" 
+                      className="text-sm"
+                      onClick={() => handleRunClick(runs[0].id)}
+                    >
+                      View Run Details
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
           
           {/* Recent runs */}
           <Card>
@@ -200,9 +311,6 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
               ) : (
                 <div className="text-center py-10 text-slate-500">
                   <p>No runs available. Runs are automatically created by the LLM system.</p>
-                  <Link href="/dashboard/experiments/runs-info" className="text-blue-600 hover:underline inline-block mt-2">
-                    Learn how runs work
-                  </Link>
                 </div>
               )}
             </CardContent>
@@ -265,9 +373,6 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
             ) : (
               <div className="text-center py-10 text-slate-500">
                 <p>No runs available. Runs are automatically created by the LLM system.</p>
-                <Link href="/dashboard/experiments/runs-info" className="text-blue-600 hover:underline inline-block mt-2">
-                  Learn how runs work
-                </Link>
               </div>
             )}
           </CardContent>

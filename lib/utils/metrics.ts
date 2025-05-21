@@ -1,118 +1,210 @@
-import { RunEntity } from '@/lib/models';
+import { MetricDataEntity, TestResultEntity } from '@/lib/models';
 
 /**
- * Define consistent colors for metrics with good visual differentiation
+ * Interface for metric statistics
  */
-export const metricColors = {
-  accuracy: '#2563eb',     // Blue
-  completeness: '#be185d', // Pink
-  relevancy: '#047857',    // Green
-  fluency: '#7c3aed',      // Purple
-  factuality: '#b45309',   // Amber
-  coherence: '#1e40af',    // Indigo
-  // Add more metrics as needed
-};
+export interface MetricStats {
+  name: string;
+  count: number;
+  average: number;
+  stdDev: number;
+  min: number;
+  max: number;
+  median: number;
+  successRate: number;
+  evaluationModel?: string;
+}
 
 /**
- * Metric threshold values for minimum acceptable performance
+ * Extract all unique metric names from test results
  */
-export const metricThresholds = {
-  accuracy: 0.75,
-  completeness: 0.70,
-  relevancy: 0.80,
-  fluency: 0.85,
-  factuality: 0.90,
-  coherence: 0.75,
-};
-
-/**
- * Metric descriptions for display purposes
- */
-export const metricDescriptions = {
-  accuracy: 'Measures how accurate the model responses are compared to reference answers',
-  completeness: 'Evaluates whether the model response covers all required aspects of the question',
-  relevancy: 'Assesses how relevant the model response is to the given prompt',
-  fluency: 'Measures the linguistic quality and natural flow of the response',
-  factuality: 'Evaluates whether the response contains only factual information',
-  coherence: 'Assesses the logical consistency and structure of the response',
-};
-
-/**
- * Stable pseudorandom function based on string
- * Ensures the same input always produces the same output
- */
-export const stableRandom = (str: string, min = 0, max = 1) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  // Normalize between 0 and 1
-  const normalized = (hash & 0x7fffffff) / 0x7fffffff;
-  // Scale to the range
-  return min + normalized * (max - min);
-};
-
-/**
- * Generate consistent metrics for a run based on its ID
- * In a real app, this would fetch actual metrics from the run data
- */
-export const generateMetricsForRun = (run: RunEntity) => {
-  // Use run ID to seed the random values - this ensures the same run always gets the same metrics
-  const metrics = {
-    accuracy: parseFloat((0.70 + stableRandom(`${run.id}_accuracy`, 0, 0.15)).toFixed(2)),
-    completeness: parseFloat((0.65 + stableRandom(`${run.id}_completeness`, 0, 0.20)).toFixed(2)),
-    relevancy: parseFloat((0.75 + stableRandom(`${run.id}_relevancy`, 0, 0.15)).toFixed(2)),
-  };
+export function extractUniqueMetricNames(testResults: TestResultEntity[]): string[] {
+  const uniqueNames = new Set<string>();
   
-  // Additional metrics can be added here as needed
-  return metrics;
-};
+  testResults.forEach(testResult => {
+    testResult.metrics_data.forEach(metric => {
+      uniqueNames.add(metric.name);
+    });
+  });
+  
+  return Array.from(uniqueNames).sort();
+}
 
 /**
- * Calculate an aggregate score across all metrics
+ * Group metrics by name from test results
  */
-export const calculateAggregateScore = (metrics: Record<string, number>) => {
-  const values = Object.values(metrics);
-  return parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(2));
-};
+export function groupMetricsByName(testResults: TestResultEntity[]): Record<string, MetricDataEntity[]> {
+  const metricsByName: Record<string, MetricDataEntity[]> = {};
+  
+  testResults.forEach(testResult => {
+    testResult.metrics_data.forEach(metric => {
+      if (!metricsByName[metric.name]) {
+        metricsByName[metric.name] = [];
+      }
+      metricsByName[metric.name].push(metric);
+    });
+  });
+  
+  return metricsByName;
+}
 
 /**
- * Get all metric names currently supported
+ * Calculate average of an array of numbers
  */
-export const getAvailableMetrics = (): string[] => {
-  return Object.keys(metricColors);
-};
+export function calculateAverage(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sum = values.reduce((acc, val) => acc + val, 0);
+  return sum / values.length;
+}
 
 /**
- * Determine the trend between two sets of metrics
+ * Calculate standard deviation of an array of numbers
  */
-export type TrendDirection = 'up' | 'down' | 'stable';
-
-export const calculateTrend = (
-  current: number,
-  previous: number | null
-): TrendDirection => {
-  if (!previous) return 'stable';
-  if (current > previous) return 'up';
-  if (current < previous) return 'down';
-  return 'stable';
-};
-
-/**
- * Format a metric value as a percentage string
- */
-export const formatMetricValue = (value: number): string => {
-  return `${(value * 100).toFixed(0)}%`;
-};
+export function calculateStandardDeviation(values: number[], average?: number): number {
+  if (values.length <= 1) return 0;
+  
+  const avg = average !== undefined ? average : calculateAverage(values);
+  const squareDiffs = values.map(value => {
+    const diff = value - avg;
+    return diff * diff;
+  });
+  
+  const avgSquareDiff = calculateAverage(squareDiffs);
+  return Math.sqrt(avgSquareDiff);
+}
 
 /**
- * Calculate change between current and previous metric values
+ * Calculate median of an array of numbers
  */
-export const calculateChange = (
-  current: number,
-  previous: number | null
-): number | null => {
-  if (previous === null) return null;
-  return parseFloat((current - previous).toFixed(2));
-}; 
+export function calculateMedian(values: number[]): number {
+  if (values.length === 0) return 0;
+  
+  const sortedValues = [...values].sort((a, b) => a - b);
+  const midIndex = Math.floor(sortedValues.length / 2);
+  
+  if (sortedValues.length % 2 === 0) {
+    // If even number of elements, average the two middle values
+    return (sortedValues[midIndex - 1] + sortedValues[midIndex]) / 2;
+  } else {
+    // If odd number of elements, return the middle value
+    return sortedValues[midIndex];
+  }
+}
+
+/**
+ * Calculate statistics for each metric across test results
+ */
+export function calculateMetricStats(testResults: TestResultEntity[]): MetricStats[] {
+  const metricsByName = groupMetricsByName(testResults);
+  
+  return Object.entries(metricsByName).map(([name, metrics]) => {
+    const scores = metrics.map(metric => metric.score);
+    const average = calculateAverage(scores);
+    const successes = metrics.filter(metric => metric.success).length;
+    
+    // Find most common evaluation model
+    const modelCounts: Record<string, number> = {};
+    metrics.forEach(metric => {
+      if (metric.evaluation_model) {
+        modelCounts[metric.evaluation_model] = (modelCounts[metric.evaluation_model] || 0) + 1;
+      }
+    });
+    
+    let mostCommonModel: string | undefined;
+    let maxCount = 0;
+    
+    Object.entries(modelCounts).forEach(([model, count]) => {
+      if (count > maxCount) {
+        maxCount = count;
+        mostCommonModel = model;
+      }
+    });
+    
+    return {
+      name,
+      count: metrics.length,
+      average,
+      stdDev: calculateStandardDeviation(scores, average),
+      min: Math.min(...scores),
+      max: Math.max(...scores),
+      median: calculateMedian(scores),
+      successRate: metrics.length > 0 ? successes / metrics.length : 0,
+      evaluationModel: mostCommonModel
+    };
+  });
+}
+
+/**
+ * Calculate percentage change between two values
+ */
+export function calculatePercentageChange(current: number, previous: number): number {
+  if (previous === 0) return current === 0 ? 0 : 100;
+  return ((current - previous) / Math.abs(previous)) * 100;
+}
+
+/**
+ * Calculate metric trends comparing the most recent runs to previous runs
+ */
+export function calculateMetricTrends(
+  testResults: TestResultEntity[], 
+  recentCount: number = 1,
+  comparisonCount: number = 5
+): Record<string, number> {
+  // Group test results by run
+  const testResultsByRunId: Record<string, TestResultEntity[]> = {};
+  
+  testResults.forEach(result => {
+    if (!testResultsByRunId[result.run_id]) {
+      testResultsByRunId[result.run_id] = [];
+    }
+    testResultsByRunId[result.run_id].push(result);
+  });
+  
+  // Sort run IDs by date (assuming the most recent run has the highest run_id value)
+  const sortedRunIds = Object.keys(testResultsByRunId).sort().reverse();
+  
+  // Get recent runs and comparison runs
+  const recentRunIds = sortedRunIds.slice(0, recentCount);
+  const comparisonRunIds = sortedRunIds.slice(recentCount, recentCount + comparisonCount);
+  
+  if (recentRunIds.length === 0 || comparisonRunIds.length === 0) {
+    return {};
+  }
+  
+  // Collect test results for both groups
+  const recentResults: TestResultEntity[] = [];
+  recentRunIds.forEach(runId => {
+    recentResults.push(...testResultsByRunId[runId]);
+  });
+  
+  const comparisonResults: TestResultEntity[] = [];
+  comparisonRunIds.forEach(runId => {
+    comparisonResults.push(...testResultsByRunId[runId]);
+  });
+  
+  // Calculate stats for both groups
+  const recentStats = calculateMetricStats(recentResults);
+  const comparisonStats = calculateMetricStats(comparisonResults);
+  
+  // Create map of comparison stats by name for easier lookup
+  const comparisonStatsByName = new Map<string, MetricStats>();
+  comparisonStats.forEach(stat => {
+    comparisonStatsByName.set(stat.name, stat);
+  });
+  
+  // Calculate percentage changes
+  const trends: Record<string, number> = {};
+  
+  recentStats.forEach(recentStat => {
+    const comparisonStat = comparisonStatsByName.get(recentStat.name);
+    
+    if (comparisonStat) {
+      trends[recentStat.name] = calculatePercentageChange(
+        recentStat.average, 
+        comparisonStat.average
+      );
+    }
+  });
+  
+  return trends;
+} 
