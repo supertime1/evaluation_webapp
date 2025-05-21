@@ -5,6 +5,7 @@ import {
   Run, 
   RunWithResults 
 } from '@/lib/schemas/run';
+import { ExperimentWithRuns } from '@/lib/schemas/experiment';
 
 const API_PATH = '/api/v1/runs';
 
@@ -20,8 +21,10 @@ export const createRun = async (data: RunCreate): Promise<Run> => {
  * Get all runs for a specific experiment
  */
 export const getRunsByExperiment = async (experimentId: string): Promise<Run[]> => {
-  const response = await apiClient.get(`/api/v1/experiments/${experimentId}/runs`);
-  return response.data;
+  // Get experiment with its runs
+  const response = await apiClient.get(`/api/v1/experiments/${experimentId}?include_runs=true`);
+  const experimentWithRuns = response.data as ExperimentWithRuns;
+  return experimentWithRuns.runs || [];
 };
 
 /**

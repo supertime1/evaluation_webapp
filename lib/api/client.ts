@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Create Axios instance with defaults
 export const apiClient = axios.create({
+  // Always use the actual backend
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',

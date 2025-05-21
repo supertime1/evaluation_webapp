@@ -1,0 +1,312 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useExperiment } from '@/lib/hooks/useExperimentManager';
+import { useRun, useRunWithResults } from '@/lib/hooks/useRunManager';
+import { ArrowLeftIcon, ClockIcon, XCircleIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { formatDistanceToNow } from 'date-fns';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { use } from 'react';
+
+export default function RunDetailPage({ params }: { params: Promise<{ id: string; runId: string }> }) {
+  const router = useRouter();
+  const resolvedParams = use(params);
+  const experimentId = resolvedParams.id;
+  const runId = resolvedParams.runId;
+  const [activeTab, setActiveTab] = useState('results');
+  
+  const { data: experiment, isLoading: isExperimentLoading, error: experimentError } = useExperiment(experimentId);
+  const { data: runWithResults, isLoading: isRunLoading, error: runError } = useRunWithResults(runId);
+  
+  const isLoading = isExperimentLoading || isRunLoading;
+  const error = experimentError || runError;
+  
+  // Get status icon for run
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+      case 'running':
+        return <ClockIcon className="h-5 w-5 text-blue-500 animate-pulse" />;
+      case 'failed':
+        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+      default:
+        return <ClockIcon className="h-5 w-5 text-slate-400" />;
+    }
+  };
+  
+  // Create a function to render test case result statuses
+  const getTestResultStatusIcon = (success: boolean) => {
+    return success ? 
+      <CheckCircleIcon className="h-5 w-5 text-green-500" /> : 
+      <XCircleIcon className="h-5 w-5 text-red-500" />;
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md m-6">
+        Error loading run details: {error.message}
+      </div>
+    );
+  }
+  
+  if (!experiment || !runWithResults) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md m-6">
+        Run or experiment not found
+      </div>
+    );
+  }
+  
+  // For demo purposes, since we don't have real data yet
+  const totalTests = runWithResults.test_results?.length || 0;
+  const passingTests = runWithResults.test_results?.filter(test => test.success).length || 0;
+  const passRate = totalTests > 0 ? (passingTests / totalTests) * 100 : 0;
+  
+  // For demo purposes - we'll generate some fake metrics
+  const mockMetrics = [
+    { name: 'Accuracy', score: 0.85, threshold: 0.8, success: true },
+    { name: 'Completeness', score: 0.73, threshold: 0.7, success: true },
+    { name: 'Relevancy', score: 0.68, threshold: 0.7, success: false },
+  ];
+  
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header with back button */}
+      <div className="flex flex-col space-y-4">
+        <div className="flex items-center">
+          <Link href={`/dashboard/experiments/${experimentId}`} className="text-slate-500 hover:text-slate-700 mr-4">
+            <ArrowLeftIcon className="h-5 w-5" />
+          </Link>
+          <h1 className="text-2xl font-bold text-slate-800">
+            Run Details
+          </h1>
+          <div className="ml-auto flex space-x-2">
+            <Button variant="outline" className="h-10">
+              <ArrowPathIcon className="h-4 w-4 mr-2" />
+              Sync Results
+            </Button>
+          </div>
+        </div>
+        
+        <div className="flex items-center text-sm text-slate-500 flex-wrap gap-y-2">
+          <div className="flex items-center mr-4">
+            <span>Experiment: </span>
+            <Link 
+              href={`/dashboard/experiments/${experimentId}`}
+              className="ml-1 text-blue-600 hover:text-blue-800 font-medium"
+            >
+              {experiment.name}
+            </Link>
+          </div>
+          <div className="flex items-center mr-4">
+            <span>Run ID: {runId}</span>
+          </div>
+          <div className="flex items-center mr-4">
+            <span>Git Commit: </span>
+            <code className="ml-1 font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">
+              {runWithResults.git_commit || 'N/A'}
+            </code>
+          </div>
+          <div className="flex items-center mr-4">
+            <span>Created: {formatDistanceToNow(new Date(runWithResults.created_at), { addSuffix: true })}</span>
+          </div>
+          <div className="flex items-center">
+            <span>Status: </span>
+            <span className="flex items-center ml-1">
+              {getStatusIcon(runWithResults.status)}
+              <span className="ml-1 capitalize">{runWithResults.status}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Tabs navigation */}
+      <Tabs defaultValue="results" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger 
+            value="results" 
+            onClick={() => setActiveTab('results')}
+            active={activeTab === 'results'}
+            className="px-4 py-2"
+          >
+            Test Results
+          </TabsTrigger>
+          <TabsTrigger
+            value="metrics"
+            onClick={() => setActiveTab('metrics')}
+            active={activeTab === 'metrics'}
+            className="px-4 py-2"
+          >
+            Metrics
+          </TabsTrigger>
+          <TabsTrigger
+            value="hyperparameters"
+            onClick={() => setActiveTab('hyperparameters')}
+            active={activeTab === 'hyperparameters'}
+            className="px-4 py-2"
+          >
+            Hyperparameters
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Test Cases</CardDescription>
+            <CardTitle className="text-2xl">{totalTests}</CardTitle>
+          </CardHeader>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Passing</CardDescription>
+            <CardTitle className="text-2xl text-green-600">{passingTests} / {totalTests}</CardTitle>
+          </CardHeader>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Pass Rate</CardDescription>
+            <CardTitle className="text-2xl">{passRate.toFixed(1)}%</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+      
+      {/* Results tab content */}
+      {activeTab === 'results' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Test Case Results</CardTitle>
+            <CardDescription>Individual results from running test cases</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {runWithResults.test_results && runWithResults.test_results.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs uppercase bg-slate-50 text-slate-700">
+                    <tr>
+                      <th className="px-6 py-3">Status</th>
+                      <th className="px-6 py-3">Name</th>
+                      <th className="px-6 py-3">Input</th>
+                      <th className="px-6 py-3">Expected</th>
+                      <th className="px-6 py-3">Actual</th>
+                      <th className="px-6 py-3">Metrics</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Just showing mock data since we don't have actual test results yet */}
+                    <tr className="border-b border-slate-200 hover:bg-slate-50">
+                      <td className="px-6 py-4">
+                        <span className="flex items-center">
+                          <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-medium">Capital of France</td>
+                      <td className="px-6 py-4 max-w-xs truncate">What is the capital of France?</td>
+                      <td className="px-6 py-4">Paris</td>
+                      <td className="px-6 py-4 max-w-xs truncate">The capital of France is Paris.</td>
+                      <td className="px-6 py-4">
+                        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Accuracy: 0.95</span>
+                      </td>
+                    </tr>
+                    <tr className="border-b border-slate-200 hover:bg-slate-50">
+                      <td className="px-6 py-4">
+                        <span className="flex items-center">
+                          <XCircleIcon className="h-5 w-5 text-red-500" />
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-medium">Population of Italy</td>
+                      <td className="px-6 py-4 max-w-xs truncate">What is the population of Italy?</td>
+                      <td className="px-6 py-4">59.11 million (2021)</td>
+                      <td className="px-6 py-4 max-w-xs truncate">Italy has a population of approximately 60.3 million people.</td>
+                      <td className="px-6 py-4">
+                        <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">Accuracy: 0.65</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-10 text-slate-500">
+                <p>No test results available for this run</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Metrics tab content */}
+      {activeTab === 'metrics' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Performance Metrics</CardTitle>
+            <CardDescription>Overall metrics for this evaluation run</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {mockMetrics.map((metric) => (
+                <Card key={metric.name} className={`border-l-4 ${metric.success ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">{metric.name}</CardTitle>
+                    <CardDescription>
+                      Threshold: {metric.threshold.toFixed(2)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold">
+                      {metric.score.toFixed(2)}
+                    </div>
+                    <div className="mt-2 h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full ${metric.success ? 'bg-green-500' : 'bg-red-500'}`}
+                        style={{ width: `${metric.score * 100}%` }}
+                      ></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Hyperparameters tab content */}
+      {activeTab === 'hyperparameters' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Run Configuration</CardTitle>
+            <CardDescription>Hyperparameters used for this run</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {runWithResults.hyperparameters && Object.keys(runWithResults.hyperparameters).length > 0 ? (
+              <div className="bg-slate-50 p-4 rounded-md font-mono text-sm">
+                <pre className="whitespace-pre-wrap">
+                  {JSON.stringify(runWithResults.hyperparameters, null, 2)}
+                </pre>
+              </div>
+            ) : (
+              <div className="text-center py-10 text-slate-500">
+                <p>No hyperparameters defined for this run</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+} 

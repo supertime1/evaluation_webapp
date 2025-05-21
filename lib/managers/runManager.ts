@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import * as runApi from '@/lib/api/runs';
+import * as experimentApi from '@/lib/api/experiments';
 import { RunCreate, RunUpdate, Run, RunWithResults } from '@/lib/schemas/run';
 import { RunEntity } from '@/lib/models';
 
@@ -17,6 +18,7 @@ export class RunManager {
       
       // Fetch from API
       try {
+        // Use the API function to get runs from the experiment endpoint
         const apiRuns = await runApi.getRunsByExperiment(experimentId);
         
         // Transform API response to local model format
