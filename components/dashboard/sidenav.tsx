@@ -32,18 +32,21 @@ export default function SideNav() {
 
   return (
     <div className="flex h-full flex-col bg-white">
-      {/* Logo section */}
+      {/* Logo section with improved alignment and larger logo */}
       <Link
-        className="flex h-20 items-center gap-2 px-6 border-b border-slate-200"
+        className="flex h-20 items-center px-3 border-b border-slate-200"
         href="/dashboard"
       >
-        <div className="flex items-center gap-2">
-          <Image
-            src="/logomark.svg"
-            alt="FortiEval"
-            width={50}
-            height={50}
-          />
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <Image
+              src="/logomark.svg"
+              alt="FortiEval"
+              width={48}
+              height={48}
+              className="mr-1"
+            />
+          </div>
           <span className="text-lg font-semibold text-slate-900">
             FortiEval
           </span>
@@ -63,9 +66,9 @@ export default function SideNav() {
           <button
             onClick={handleSignOut}
             disabled={isLoading}
-            className="flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
-            <PowerIcon className={`w-5 h-5 ${isLoading ? 'animate-pulse' : ''}`} />
+            <PowerIcon className="w-5 h-5 flex-shrink-0" />
             <span>{isLoading ? 'Signing Out...' : 'Sign Out'}</span>
           </button>
         </div>
