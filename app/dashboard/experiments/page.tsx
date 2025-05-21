@@ -1,9 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useExperiments } from '@/lib/hooks/useExperimentManager';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, BeakerIcon, ClockIcon, XCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
@@ -12,7 +10,6 @@ import { formatDistanceToNow } from 'date-fns';
 export default function ExperimentsPage() {
   const router = useRouter();
   const { data: experiments, isLoading, error } = useExperiments();
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
   // Handle navigation to experiment details
   const handleExperimentClick = (experimentId: string) => {
@@ -32,11 +29,6 @@ export default function ExperimentsPage() {
         return <ClockIcon className="h-5 w-5 text-slate-400" />;
     }
   };
-
-  // Filter experiments by status
-  const filteredExperiments = selectedStatus
-    ? experiments?.filter(exp => exp.status === selectedStatus)
-    : experiments;
 
   if (isLoading) {
     return (
@@ -67,46 +59,13 @@ export default function ExperimentsPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger 
-            value="all" 
-            onClick={() => setSelectedStatus(null)}
-            className="px-4 py-2"
-          >
-            All
-          </TabsTrigger>
-          <TabsTrigger 
-            value="running" 
-            onClick={() => setSelectedStatus('running')}
-            className="px-4 py-2"
-          >
-            Running
-          </TabsTrigger>
-          <TabsTrigger 
-            value="completed" 
-            onClick={() => setSelectedStatus('completed')}
-            className="px-4 py-2"
-          >
-            Completed
-          </TabsTrigger>
-          <TabsTrigger 
-            value="failed" 
-            onClick={() => setSelectedStatus('failed')}
-            className="px-4 py-2"
-          >
-            Failed
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredExperiments?.length === 0 ? (
+        {experiments?.length === 0 ? (
           <div className="col-span-full text-center py-10 text-slate-500">
             No experiments found. Create your first experiment.
           </div>
         ) : (
-          filteredExperiments?.map((experiment) => (
+          experiments?.map((experiment) => (
             <Card 
               key={experiment.id} 
               className="hover:shadow-md transition-shadow cursor-pointer"
