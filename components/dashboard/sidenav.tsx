@@ -6,19 +6,27 @@ import { PowerIcon } from '@heroicons/react/24/outline';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
 import Image from 'next/image';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 export default function SideNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const { logout } = useAuth({ checkOnMount: false });
+  const [isLoading, setIsLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const handleSignOut = async () => {
     try {
-      // TODO: Implement actual sign out logic
+      setIsLoading(true);
+      // Call the logout function from useAuth
+      await logout();
       router.push('/login');
     } catch (error) {
       console.error('Error during sign out:', error);
+      // Even if logout fails, redirect to login
       router.push('/login');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -54,10 +62,11 @@ export default function SideNav() {
           {/* Sign out button - updated to match design system */}
           <button
             onClick={handleSignOut}
-            className="flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            disabled={isLoading}
+            className="flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
-            <PowerIcon className="w-5 h-5" />
-            <span>Sign Out</span>
+            <PowerIcon className={`w-5 h-5 ${isLoading ? 'animate-pulse' : ''}`} />
+            <span>{isLoading ? 'Signing Out...' : 'Sign Out'}</span>
           </button>
         </div>
       </div>
