@@ -1,12 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ComponentProps } from 'react';
+import { ComponentProps, useState, useMemo } from 'react';
 import { useExperiments } from '@/lib/hooks/useExperimentManager';
 import { useExperimentRuns } from '@/lib/hooks/useRunManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, RocketLaunchIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { Input } from '@/components/ui/input';
+import { PlusIcon, RocketLaunchIcon, CalendarIcon, MagnifyingGlassIcon, FunnelIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { ExperimentEntity } from '@/lib/models';
 import { cn } from '@/lib/utils';
@@ -95,9 +96,38 @@ function ExperimentCard({ experiment, className, ...props }: { experiment: Exper
   );
 }
 
+// Type for sort order
+type SortOrder = 'newest' | 'oldest';
+
 export default function ExperimentsPage() {
   const router = useRouter();
   const { data: experiments, isLoading, error } = useExperiments();
+  
+  // State for search and filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  
+  // Filter and sort experiments based on search and sort order
+  const filteredExperiments = useMemo(() => {
+    if (!experiments) return [];
+    
+    // Filter by search query
+    let filtered = experiments;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = experiments.filter(exp => 
+        exp.name.toLowerCase().includes(query) ||
+        (exp.description && exp.description.toLowerCase().includes(query))
+      );
+    }
+    
+    // Sort by date
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+  }, [experiments, searchQuery, sortOrder]);
 
   if (isLoading) {
     return (
@@ -127,14 +157,63 @@ export default function ExperimentsPage() {
           New Experiment
         </Button>
       </div>
+      
+      {/* Search and Filter Bar */}
+      <div className="flex gap-3 items-center flex-wrap md:flex-nowrap">
+        <div className="relative w-full md:w-96">
+          <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+          <Input
+            className="pl-10 bg-white"
+            placeholder="Search experiments by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        
+        <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center text-sm text-slate-500">
+            <FunnelIcon className="h-4 w-4 mr-2" />
+            <span>Sort:</span>
+          </div>
+          
+          <div className="flex rounded-md overflow-hidden border border-slate-200">
+            <button
+              onClick={() => setSortOrder('newest')}
+              className={cn(
+                "flex items-center px-3 py-2 text-sm",
+                sortOrder === 'newest' 
+                  ? "bg-slate-900 text-white" 
+                  : "bg-white text-slate-700 hover:bg-slate-100"
+              )}
+            >
+              <ArrowDownIcon className="h-3 w-3 mr-1" />
+              Newest
+            </button>
+            <button
+              onClick={() => setSortOrder('oldest')}
+              className={cn(
+                "flex items-center px-3 py-2 text-sm border-l border-slate-200",
+                sortOrder === 'oldest' 
+                  ? "bg-slate-900 text-white" 
+                  : "bg-white text-slate-700 hover:bg-slate-100"
+              )}
+            >
+              <ArrowUpIcon className="h-3 w-3 mr-1" />
+              Oldest
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {experiments?.length === 0 ? (
+        {filteredExperiments.length === 0 ? (
           <div className="col-span-full text-center py-10 text-slate-500">
-            No experiments found. Create your first experiment.
+            {experiments?.length === 0 
+              ? "No experiments found. Create your first experiment." 
+              : "No experiments match your search criteria."}
           </div>
         ) : (
-          experiments?.map((experiment) => (
+          filteredExperiments.map((experiment) => (
             <ExperimentCard key={experiment.id} experiment={experiment} />
           ))
         )}
