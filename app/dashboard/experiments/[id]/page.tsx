@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useExperiment } from '@/lib/hooks/useExperimentManager';
 import { useExperimentRuns } from '@/lib/hooks/useRunManager';
-import { ArrowLeftIcon, ClockIcon, XCircleIcon, CheckCircleIcon, PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ClockIcon, XCircleIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -219,14 +219,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
                 </div>
               ) : (
                 <div className="text-center py-10 text-slate-500">
-                  <p className="mb-4">No runs created yet</p>
-                  <Button 
-                    className="bg-slate-900 hover:bg-slate-800 text-white"
-                    onClick={() => router.push(`/dashboard/experiments/${experimentId}/runs/new`)}
-                  >
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Create First Run
-                  </Button>
+                  <p>No runs available. Runs are automatically created by the LLM system.</p>
                 </div>
               )}
             </CardContent>
@@ -240,13 +233,6 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>All Runs</CardTitle>
-              <Button 
-                className="h-10 bg-slate-900 hover:bg-slate-800 text-white"
-                onClick={() => router.push(`/dashboard/experiments/${experimentId}/runs/new`)}
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                New Run
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -295,14 +281,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
               </div>
             ) : (
               <div className="text-center py-10 text-slate-500">
-                <p className="mb-4">No runs created yet</p>
-                <Button 
-                  className="bg-slate-900 hover:bg-slate-800 text-white"
-                  onClick={() => router.push(`/dashboard/experiments/${experimentId}/runs/new`)}
-                >
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Create First Run
-                </Button>
+                <p>No runs available. Runs are automatically created by the LLM system.</p>
               </div>
             )}
           </CardContent>
