@@ -14,6 +14,25 @@ type MetricsSummaryProps = {
   title?: string;
 };
 
+// Helper function to get a color for each metric
+function getMetricColor(metricName: string): string {
+  // Set of predefined colors for different metrics
+  const colorMap: Record<string, string> = {
+    'Concision': '#3b82f6', // blue
+    'Completeness': '#6366f1', // indigo
+    'Relevancy': '#8b5cf6', // purple
+    'Answer Relevancy': '#8b5cf6', // purple
+    'Correctness': '#ec4899', // pink
+    'Factual Accuracy': '#f43f5e', // rose
+    'Helpfulness': '#f97316', // orange
+    'Coherence': '#eab308', // yellow
+    'Safety': '#10b981', // emerald
+  };
+  
+  // Return mapped color or a default if not found
+  return colorMap[metricName] || '#64748b'; // slate as default
+}
+
 export function MetricsSummaryCard({ testResults, title = 'Metrics Summary' }: MetricsSummaryProps) {
   // Calculate metric statistics
   const stats = useMemo(() => {
@@ -65,7 +84,7 @@ export function MetricsSummaryCard({ testResults, title = 'Metrics Summary' }: M
       <CardContent>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-xs uppercase bg-slate-50 text-slate-700">
+            <thead className="text-xs uppercase text-slate-700">
               <tr>
                 <th className="px-4 py-2 text-left">Metric</th>
                 <th className="px-4 py-2 text-right">Min</th>
@@ -76,29 +95,44 @@ export function MetricsSummaryCard({ testResults, title = 'Metrics Summary' }: M
                 <th className="px-4 py-2 text-right">Success</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-200">
               {stats.map((metric: MetricStats) => (
-                <tr key={metric.name} className="border-b border-slate-200">
-                  <td className="px-4 py-3 font-medium">
-                    {metric.name}
-                    {metric.evaluationModel && (
-                      <div className="text-xs text-slate-500">
-                        {metric.evaluationModel}
+                <tr 
+                  key={metric.name} 
+                  className="hover:bg-slate-50"
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center">
+                      <div 
+                        className="w-2 h-8 rounded-full mr-3" 
+                        style={{ backgroundColor: getMetricColor(metric.name) }}
+                      />
+                      <div>
+                        <div className="font-medium">{metric.name}</div>
+                        {metric.evaluationModel && (
+                          <div className="text-xs text-slate-500">
+                            {metric.evaluationModel}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </td>
-                  <td className="px-4 py-3 text-right">{formatScore(metric.min)}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{formatScore(metric.min)}</td>
                   <td className="px-4 py-3 text-right font-medium">{formatScore(metric.average)}</td>
-                  <td className="px-4 py-3 text-right">{formatScore(metric.max)}</td>
-                  <td className="px-4 py-3 text-right">{formatScore(metric.stdDev)}</td>
-                  <td className="px-4 py-3 flex justify-center">
-                    {getStatusIcon(metric.successRate)}
+                  <td className="px-4 py-3 text-right text-slate-600">{formatScore(metric.max)}</td>
+                  <td className="px-4 py-3 text-right text-slate-600">{formatScore(metric.stdDev)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-center">
+                      {getStatusIcon(metric.successRate)}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {formatScore(metric.successRate * 100)}%
-                    <span className="text-slate-400 ml-1">
+                    <div>
+                      {formatScore(metric.successRate * 100)}%
+                    </div>
+                    <div className="text-xs text-slate-400">
                       ({Math.round(metric.successRate * metric.count)}/{metric.count})
-                    </span>
+                    </div>
                   </td>
                 </tr>
               ))}

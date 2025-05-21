@@ -8,13 +8,13 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { RunEntity, TestResultEntity } from '@/lib/models';
 import { extractUniqueMetricNames, calculateMetricStats } from '@/lib/utils/metrics';
 import { useQuery } from '@tanstack/react-query';
 import { testResultManager } from '@/lib/managers/testResultManager';
+import { useRouter } from 'next/navigation';
 
 type MetricsChartProps = {
   runs: RunEntity[];
@@ -27,6 +27,82 @@ interface ChartDataPoint {
   timestamp: number;
   [key: string]: string | number | undefined;
 }
+
+// Custom tooltip component for the chart
+const CustomTooltip = ({ active, payload, label, experimentId, runs }: any) => {
+  const router = useRouter();
+  
+  if (active && payload && payload.length) {
+    // Find the run for this data point
+    const runId = payload[0]?.payload?.runId;
+    const run = runs.find((r: RunEntity) => r.id === runId);
+    
+    // Navigate to run details
+    const handleViewRun = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation(); // Prevent event bubbling
+      
+      if (runId && experimentId) {
+        const url = `/dashboard/experiments/${experimentId}/runs/${runId}`;
+        console.log("Navigating to:", url); // Debug log
+        router.push(url);
+      }
+    };
+    
+    return (
+      <div 
+        className="bg-white p-4 border border-slate-200 rounded-md shadow-md w-72" 
+        onClick={(e) => e.stopPropagation()}
+        style={{ pointerEvents: 'auto' }}
+      >
+        <h4 className="text-sm font-semibold mb-2">
+          Test Run ID: <span className="font-mono text-xs">{runId?.substring(0, 12)}...</span>
+        </h4>
+        
+        <div className="space-y-1">
+          <p className="text-xs text-slate-500">Average Metric Scores</p>
+          {payload.map((entry: any, index: number) => (
+            <div 
+              key={`metric-${index}`}
+              className="flex items-center justify-between text-sm"
+            >
+              <div className="flex items-center">
+                <div 
+                  className="w-2 h-2 rounded-full mr-2" 
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span>{entry.name}</span>
+              </div>
+              <span className="font-medium">{Number(entry.value).toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+        
+        {run && (
+          <div className="mt-3 pt-2 border-t border-slate-200 text-xs text-slate-500">
+            <div className="flex justify-between mb-1">
+              <span>Status:</span>
+              <span className="capitalize">{run.status}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Created:</span>
+              <span>{new Date(run.created_at).toLocaleDateString()}</span>
+            </div>
+          </div>
+        )}
+        
+        <button 
+          onClick={handleViewRun}
+          className="mt-3 block w-full text-center bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 px-3 rounded-md transition-colors cursor-pointer"
+        >
+          View Run Details
+        </button>
+      </div>
+    );
+  }
+  
+  return null;
+};
 
 const COLORS = [
   '#3b82f6', // blue
@@ -167,16 +243,8 @@ export function ExperimentMetricsChart({ runs, experimentId }: MetricsChartProps
           tickLine={{ stroke: '#9ca3af' }}
         />
         <Tooltip 
-          formatter={(value: number) => [value !== undefined ? value.toFixed(2) : 'N/A', '']}
-          labelFormatter={(label) => `Run: ${label}`}
-          contentStyle={{ 
-            backgroundColor: 'white',
-            borderColor: '#e5e7eb',
-            borderRadius: '0.375rem',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-          }}
+          content={<CustomTooltip experimentId={experimentId} runs={runs} />}
         />
-        <Legend />
         
         {/* Dynamically generate lines for each metric */}
         {metricNames.map((metricName, index) => (

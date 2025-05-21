@@ -208,7 +208,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
             
             {/* Metrics trend card */}
             <div>
-              <Card>
+              <Card className="h-full">
                 <CardHeader>
                   <CardTitle>Metric Trends</CardTitle>
                   <CardDescription>% change in metric scores for the {Math.min(7, runs?.length || 0)} most recent test runs</CardDescription>
@@ -216,46 +216,62 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
                 <CardContent className="space-y-4">
                   {allTestResults.length > 0 ? (
                     <div className="space-y-3">
-                      {calculateMetricStats(allTestResults).map((metric) => {
+                      {calculateMetricStats(allTestResults).map((metric, index) => {
                         const trend = calculateMetricTrends(allTestResults, 1, 5)[metric.name];
                         const trendValue = trend !== undefined && !isNaN(trend) ? trend : 0;
                         const isUp = trendValue > 0;
                         const isSignificant = Math.abs(trendValue) >= 0.5;
+                        const color = getMetricColor(metric.name);
                         
                         return (
                           <div 
                             key={metric.name}
-                            className="bg-slate-50 rounded-lg p-4 flex items-center justify-between"
+                            className="bg-slate-50 hover:bg-slate-100 rounded-lg p-4 flex items-center justify-between transition-colors cursor-pointer"
+                            onMouseEnter={() => {
+                              // This is where you'd highlight the corresponding line in the chart
+                              // This would require a shared state between components
+                            }}
                           >
                             <div className="flex items-center">
-                              <div 
-                                className="w-1 h-12 mr-3 rounded-full" 
-                                style={{ backgroundColor: getMetricColor(metric.name) }}
-                              />
-                              <span className="font-medium">{metric.name}</span>
-                              {metric.evaluationModel && (
-                                <span className="text-xs text-slate-500 ml-2">({metric.evaluationModel})</span>
-                              )}
+                              <div className="flex flex-col items-center mr-3">
+                                <div 
+                                  className="w-1 h-12 rounded-full" 
+                                  style={{ backgroundColor: color }}
+                                />
+                              </div>
+                              <div>
+                                <div className="font-medium">{metric.name}</div>
+                                {metric.evaluationModel && (
+                                  <div className="text-xs text-slate-500">
+                                    {metric.evaluationModel}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center">
-                              {isSignificant ? (
-                                isUp ? (
-                                  <span className="flex items-center text-green-600">
-                                    <ArrowUpIcon className="h-4 w-4 mr-1" />
-                                    +{Math.abs(trendValue).toFixed(2)}%
-                                  </span>
+                            <div className="flex flex-col items-end">
+                              <div className="font-medium mb-1">
+                                {metric.average.toFixed(2)}
+                              </div>
+                              <div className="flex items-center text-xs">
+                                {isSignificant ? (
+                                  isUp ? (
+                                    <span className="flex items-center text-green-600">
+                                      <ArrowUpIcon className="h-3.5 w-3.5 mr-1" />
+                                      +{Math.abs(trendValue).toFixed(2)}%
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center text-red-600">
+                                      <ArrowDownIcon className="h-3.5 w-3.5 mr-1" />
+                                      -{Math.abs(trendValue).toFixed(2)}%
+                                    </span>
+                                  )
                                 ) : (
-                                  <span className="flex items-center text-red-600">
-                                    <ArrowDownIcon className="h-4 w-4 mr-1" />
-                                    -{Math.abs(trendValue).toFixed(2)}%
+                                  <span className="flex items-center text-slate-500">
+                                    <MinusIcon className="h-3.5 w-3.5 mr-1" />
+                                    0.00%
                                   </span>
-                                )
-                              ) : (
-                                <span className="flex items-center text-slate-500">
-                                  <MinusIcon className="h-4 w-4 mr-1" />
-                                  0.00%
-                                </span>
-                              )}
+                                )}
+                              </div>
                             </div>
                           </div>
                         );
