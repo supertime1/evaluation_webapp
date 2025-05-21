@@ -1,16 +1,18 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { ComponentProps } from 'react';
 import { useExperiments } from '@/lib/hooks/useExperimentManager';
 import { useExperimentRuns } from '@/lib/hooks/useRunManager';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, BeakerIcon, RocketLaunchIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, RocketLaunchIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { ExperimentEntity } from '@/lib/models';
+import { cn } from '@/lib/utils';
 
 // Component for displaying experiment card with run information
-function ExperimentCard({ experiment }: { experiment: ExperimentEntity }) {
+function ExperimentCard({ experiment, className, ...props }: { experiment: ExperimentEntity } & ComponentProps<typeof Card>) {
   const router = useRouter();
   const { data: runs } = useExperimentRuns(experiment.id);
   
@@ -22,47 +24,73 @@ function ExperimentCard({ experiment }: { experiment: ExperimentEntity }) {
   const handleExperimentClick = () => {
     router.push(`/dashboard/experiments/${experiment.id}`);
   };
+
+  // Calculate run statistics  
+  const runCount = runs?.length || 0;
+  const hasRuns = runCount > 0;
   
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer"
+      className={cn("hover:shadow-md transition-all cursor-pointer border-slate-200 overflow-hidden h-full", className)}
       onClick={handleExperimentClick}
+      {...props}
     >
-      <CardHeader className="pb-2">
-        <div>
-          <CardTitle className="text-lg font-semibold text-slate-900">
-            {experiment.name}
-          </CardTitle>
-          <CardDescription className="text-sm text-slate-500 mt-1">
-            Created {formatDistanceToNow(new Date(experiment.created_at), { addSuffix: true })}
-          </CardDescription>
-        </div>
+      <CardHeader className="p-5 pb-0 flex flex-row justify-between items-start">
+        <CardTitle className="text-lg font-semibold text-slate-900 line-clamp-1 mr-4">
+          {experiment.name}
+        </CardTitle>
+        <span className="text-xs text-slate-500 whitespace-nowrap">
+          {formatDistanceToNow(new Date(experiment.created_at), { addSuffix: true })}
+        </span>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-slate-700 line-clamp-2 h-10">
+      
+      <CardContent className="p-5 flex flex-col h-full">
+        {/* Description */}
+        <p className="text-sm text-slate-600 mb-5 line-clamp-2 flex-grow">
           {experiment.description || 'No description provided'}
         </p>
-        <div className="mt-4 flex items-center text-xs text-slate-500">
-          <BeakerIcon className="h-4 w-4 mr-1" />
-          <span>ID: {experiment.id}</span>
-        </div>
-      </CardContent>
-      <CardFooter className="border-t border-slate-100 pt-4 pb-3 px-6">
-        <div className="w-full space-y-2 text-xs">
-          <div className="flex justify-between items-center text-slate-500">
-            <div className="flex items-center">
-              <RocketLaunchIcon className="h-4 w-4 mr-1" />
-              <span>{runs?.length || 0} {runs?.length === 1 ? 'run' : 'runs'}</span>
-            </div>
-            {mostRecentRun && (
-              <div className="flex items-center">
-                <CalendarIcon className="h-4 w-4 mr-1" />
-                <span>Latest run: {formatDistanceToNow(new Date(mostRecentRun.created_at), { addSuffix: true })}</span>
-              </div>
-            )}
+        
+        {/* Metadata */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          {/* Run count */}
+          <div>
+            <p className="text-slate-500 text-xs flex items-center">
+              <RocketLaunchIcon className="h-3 w-3 mr-1" />
+              RUNS
+            </p>
+            <p className="text-slate-700 font-medium">
+              {runCount} {runCount === 1 ? 'run' : 'runs'}
+            </p>
+          </div>
+          
+          {/* Latest run */}
+          <div>
+            <p className="text-slate-500 text-xs flex items-center">
+              <CalendarIcon className="h-3 w-3 mr-1" />
+              LATEST RUN
+            </p>
+            <p className="text-slate-700 font-medium">
+              {mostRecentRun 
+                ? formatDistanceToNow(new Date(mostRecentRun.created_at), { addSuffix: true })
+                : 'None yet'}
+            </p>
+          </div>
+          
+          {/* ID + Status pill */}
+          <div className="col-span-2 flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+            <span className="text-xs text-slate-500 font-mono">
+              {experiment.id}
+            </span>
+            
+            <span className={cn(
+              "px-2 py-0.5 rounded-full text-xs font-medium",
+              hasRuns ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-600"
+            )}>
+              {hasRuns ? "Active" : "No runs"}
+            </span>
           </div>
         </div>
-      </CardFooter>
+      </CardContent>
     </Card>
   );
 }
@@ -100,7 +128,7 @@ export default function ExperimentsPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {experiments?.length === 0 ? (
           <div className="col-span-full text-center py-10 text-slate-500">
             No experiments found. Create your first experiment.
