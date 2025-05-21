@@ -7,10 +7,12 @@ import { useExperimentRuns } from '@/lib/hooks/useRunManager';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusIcon, RocketLaunchIcon, CalendarIcon, MagnifyingGlassIcon, FunnelIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, RocketLaunchIcon, CalendarIcon, MagnifyingGlassIcon, FunnelIcon, ArrowUpIcon, ArrowDownIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { ExperimentEntity } from '@/lib/models';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { MiniMetricsChart } from '@/components/metrics/MiniMetricsChart';
 
 // Component for displaying experiment card with run information
 function ExperimentCard({ experiment, className, ...props }: { experiment: ExperimentEntity } & ComponentProps<typeof Card>) {
@@ -47,9 +49,16 @@ function ExperimentCard({ experiment, className, ...props }: { experiment: Exper
       
       <CardContent className="p-5 flex flex-col h-full">
         {/* Description */}
-        <p className="text-sm text-slate-600 mb-5 line-clamp-2 flex-grow">
+        <p className="text-sm text-slate-600 mb-3 line-clamp-2 flex-grow">
           {experiment.description || 'No description provided'}
         </p>
+        
+        {/* Mini metrics chart if runs exist */}
+        {hasRuns && runs && (
+          <div className="mb-4">
+            <MiniMetricsChart runs={runs} />
+          </div>
+        )}
         
         {/* Metadata */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
@@ -156,6 +165,23 @@ export default function ExperimentsPage() {
           <PlusIcon className="h-5 w-5 mr-2" />
           New Experiment
         </Button>
+      </div>
+      
+      {/* Information about how runs work */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <InformationCircleIcon className="h-5 w-5 text-blue-600" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-blue-700">
+              Runs are automatically created by the LLM system based on model changes. 
+              <Link href="/dashboard/experiments/runs-info" className="font-medium ml-1 underline">
+                Learn more about how runs work
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
       
       {/* Search and Filter Bar */}

@@ -10,19 +10,46 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  TooltipProps,
 } from 'recharts';
 import { RunEntity } from '@/lib/models';
+import { useRouter } from 'next/navigation';
 
 type MetricsChartProps = {
   runs: RunEntity[];
+  experimentId?: string;
 };
 
 type MetricData = {
   name: string;
+  runId: string;
   [key: string]: string | number | null;
 };
 
-export function ExperimentMetricsChart({ runs }: MetricsChartProps) {
+const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-slate-200 shadow-md rounded-md">
+        <p className="text-slate-800 font-medium mb-2">Run: {label}</p>
+        {payload.map((entry, index) => (
+          <div key={index} className="flex items-center text-sm mb-1">
+            <div 
+              className="w-3 h-3 rounded-full mr-2" 
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="font-medium">{entry.name}: </span>
+            <span className="ml-1">{Number(entry.value).toFixed(2)}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+export function ExperimentMetricsChart({ runs, experimentId }: MetricsChartProps) {
+  const router = useRouter();
+  
   // Convert runs to chart data
   const data = useMemo(() => {
     // For demo, generate some fake metrics data since we don't have real metrics yet
@@ -45,11 +72,18 @@ export function ExperimentMetricsChart({ runs }: MetricsChartProps) {
     }).reverse(); // Show most recent runs first
   }, [runs]);
   
+  // Handle click on a data point to navigate to the run details
+  const handleDataPointClick = (data: MetricData) => {
+    if (data && data.runId && experimentId) {
+      router.push(`/dashboard/experiments/${experimentId}/runs/${data.runId}`);
+    }
+  };
+  
   // If no data, show a placeholder message
   if (data.length === 0) {
     return (
       <div className="h-full w-full flex items-center justify-center text-slate-500">
-        No metrics data available yet. Create runs to generate metrics.
+        No metrics data available yet. Runs are automatically created by the LLM system.
       </div>
     );
   }
@@ -64,6 +98,11 @@ export function ExperimentMetricsChart({ runs }: MetricsChartProps) {
           left: 20,
           bottom: 20,
         }}
+        onClick={(props) => {
+          if (props && props.activePayload && props.activePayload[0]) {
+            handleDataPointClick(props.activePayload[0].payload as MetricData);
+          }
+        }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis 
@@ -77,24 +116,20 @@ export function ExperimentMetricsChart({ runs }: MetricsChartProps) {
           tick={{ fontSize: 12 }}
           tickLine={{ stroke: '#9ca3af' }}
         />
-        <Tooltip 
-          formatter={(value: number) => [value.toFixed(2), '']}
-          labelFormatter={(label) => `Run: ${label}`}
-          contentStyle={{ 
-            backgroundColor: 'white',
-            borderColor: '#e5e7eb',
-            borderRadius: '0.375rem',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-          }}
+        <Tooltip content={<CustomTooltip />} />
+        <Legend 
+          layout="vertical" 
+          align="left"
+          verticalAlign="middle"
+          wrapperStyle={{ paddingRight: 20 }}
         />
-        <Legend />
         <Line
           type="monotone"
           dataKey="accuracy"
           stroke="#3b82f6"
           strokeWidth={2}
-          dot={{ r: 4 }}
-          activeDot={{ r: 6 }}
+          dot={{ r: 4, cursor: 'pointer' }}
+          activeDot={{ r: 6, cursor: 'pointer' }}
           name="Accuracy"
         />
         <Line
@@ -102,8 +137,8 @@ export function ExperimentMetricsChart({ runs }: MetricsChartProps) {
           dataKey="completeness"
           stroke="#6366f1"
           strokeWidth={2}
-          dot={{ r: 4 }}
-          activeDot={{ r: 6 }}
+          dot={{ r: 4, cursor: 'pointer' }}
+          activeDot={{ r: 6, cursor: 'pointer' }}
           name="Completeness"
         />
         <Line
@@ -111,8 +146,8 @@ export function ExperimentMetricsChart({ runs }: MetricsChartProps) {
           dataKey="relevancy"
           stroke="#8b5cf6"
           strokeWidth={2}
-          dot={{ r: 4 }}
-          activeDot={{ r: 6 }}
+          dot={{ r: 4, cursor: 'pointer' }}
+          activeDot={{ r: 6, cursor: 'pointer' }}
           name="Relevancy"
         />
       </LineChart>

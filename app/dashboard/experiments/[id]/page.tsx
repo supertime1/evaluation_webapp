@@ -10,7 +10,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExperimentMetricsChart } from '@/components/metrics/ExperimentMetricsChart';
+import { MetricTrendsV2 } from '@/components/metrics/MetricTrendsV2';
+import { MetricBreakdown } from '@/components/metrics/MetricBreakdown';
 import { use } from 'react';
 
 export default function ExperimentDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -82,13 +83,6 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
               <ArrowPathIcon className="h-4 w-4 mr-2" />
               Sync
             </Button>
-            {/* <Button 
-              className="h-10 bg-slate-900 hover:bg-slate-800 text-white"
-              onClick={() => router.push(`/dashboard/experiments/${experimentId}/runs/new`)}
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              New Run
-            </Button> */}
           </div>
         </div>
         
@@ -140,17 +134,10 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* Metrics chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Metrics Trends</CardTitle>
-              <CardDescription>Performance metrics across recent runs</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80 w-full">
-                <ExperimentMetricsChart runs={runs || []} />
-              </div>
-            </CardContent>
-          </Card>
+          <MetricTrendsV2 runs={runs || []} experimentId={experimentId} />
+          
+          {/* Metrics breakdown */}
+          <MetricBreakdown runs={runs || []} />
           
           {/* Recent runs */}
           <Card>
@@ -213,6 +200,9 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
               ) : (
                 <div className="text-center py-10 text-slate-500">
                   <p>No runs available. Runs are automatically created by the LLM system.</p>
+                  <Link href="/dashboard/experiments/runs-info" className="text-blue-600 hover:underline inline-block mt-2">
+                    Learn how runs work
+                  </Link>
                 </div>
               )}
             </CardContent>
@@ -275,6 +265,9 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
             ) : (
               <div className="text-center py-10 text-slate-500">
                 <p>No runs available. Runs are automatically created by the LLM system.</p>
+                <Link href="/dashboard/experiments/runs-info" className="text-blue-600 hover:underline inline-block mt-2">
+                  Learn how runs work
+                </Link>
               </div>
             )}
           </CardContent>
