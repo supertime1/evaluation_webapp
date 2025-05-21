@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    .logo-red {fill:#da291c;}
+    .logo-black {fill:#000000;}
+    @media (prefers-color-scheme: dark) {
+      .logo-black {fill:#ffffff;}
+    }
+  </style>
+  <!-- Fortinet logo blocks -->
+  <g transform="translate(10, 10) scale(0.8)">
+    <path class="logo-red" d="m193.56,73.07v13.84h-21.53v-13.84h21.53Zm-48.96,33.58h0s21.53,0,21.53,0h0v-13.84h-21.53v13.83Zm48.95-41.73c0-6.4-5.19-11.6-11.6-11.6h-9.93v13.84h21.52v-2.24Zm-48.95-11.59v13.84h21.53v-13.84h0s-21.53,0-21.53,0h0Zm-27.43,19.74h0v13.84h21.53v-13.84h-21.53Zm54.86,33.58h9.93c6.4,0,11.6-5.19,11.6-11.6v-2.24h-21.52v13.84Zm-54.86-11.6c0,6.4,5.19,11.6,11.6,11.6h9.93s0-13.83,0-13.83h-21.53v2.24Zm0-30.13v2.24h21.53v-13.84h-9.93c-6.4,0-11.6,5.19-11.6,11.6Z"/>
+  </g>
+</svg> 

@@ -6,8 +6,15 @@ import Providers from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "LLM Evaluation Dashboard",
+  title: "FortiEval",
   description: "A platform for evaluating LLM models using deepeval",
+  icons: {
+    icon: [
+      { url: '/favicon-large.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' }
+    ],
+    apple: { url: '/apple-touch-icon.png', type: 'image/png' },
+  },
 };
 
 export default function RootLayout({
