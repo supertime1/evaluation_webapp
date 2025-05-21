@@ -11,7 +11,11 @@ interface UseAuthReturn {
   clearError: () => void;
 }
 
-export function useAuth(): UseAuthReturn {
+interface UseAuthOptions {
+  checkOnMount?: boolean;
+}
+
+export function useAuth(options: UseAuthOptions = { checkOnMount: true }): UseAuthReturn {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authManager.isAuthenticated());
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
@@ -22,15 +26,15 @@ export function useAuth(): UseAuthReturn {
       setIsAuthenticated(authManager.isAuthenticated());
     });
 
-    // Check auth status on mount
-    if (!isAuthenticated) {
+    // Check auth status on mount, only if option is enabled
+    if (!isAuthenticated && options.checkOnMount) {
       setIsLoading(true);
       authManager.checkAuthStatus()
         .finally(() => setIsLoading(false));
     }
 
     return unsubscribe;
-  }, [isAuthenticated]);
+  }, [isAuthenticated, options.checkOnMount]);
 
   const login = async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
@@ -90,7 +94,7 @@ export function useAuth(): UseAuthReturn {
 }
 
 // For components that only need to check auth status without functionality
-export function useAuthStatus() {
+export function useAuthStatus(options: UseAuthOptions = { checkOnMount: false }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authManager.isAuthenticated());
   
   useEffect(() => {

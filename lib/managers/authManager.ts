@@ -62,11 +62,15 @@ class AuthManager {
   // Check auth status on init or after page refresh
   async checkAuthStatus(): Promise<boolean> {
     try {
+      console.log('AuthManager: Checking authentication status');
       const isAuthenticated = await authApi.isAuthenticated();
+      console.log('AuthManager: Authentication status:', isAuthenticated);
       this.isLoggedIn = isAuthenticated;
       this.notifyListeners();
       return isAuthenticated;
     } catch (error) {
+      console.error('AuthManager: Error checking auth status:', error);
+      // Don't change auth state on error - just return false for this check
       this.isLoggedIn = false;
       this.notifyListeners();
       return false;

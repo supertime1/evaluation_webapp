@@ -1,4 +1,5 @@
 import { networkManager } from '../managers/networkManager';
+import axios, { AxiosError } from 'axios';
 
 interface LoginCredentials {
   username: string;  // FastAPI expects 'username', even though we're using email
@@ -116,6 +117,12 @@ export const authApi = {
       console.log('Auth API: User fetched successfully');
       return response.data;
     } catch (error) {
+      // If it's a 401 error, the user is not authenticated - this is normal
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        console.log('Auth API: User not authenticated (401)');
+        return null;
+      }
+      // For other errors, log and throw
       console.error('Get current user API error:', error);
       throw error;
     }
@@ -127,6 +134,7 @@ export const authApi = {
       const user = await authApi.getCurrentUser();
       return !!user;
     } catch (error) {
+      console.log('Auth API: isAuthenticated check failed', error);
       return false;
     }
   }

@@ -11,7 +11,7 @@ import { useUser } from '@/lib/hooks/useUser';
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth({ checkOnMount: false });
   const { loadUser } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
