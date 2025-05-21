@@ -2,33 +2,74 @@
 
 import { useRouter } from 'next/navigation';
 import { useExperiments } from '@/lib/hooks/useExperimentManager';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useExperimentRuns } from '@/lib/hooks/useRunManager';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, BeakerIcon, ClockIcon, XCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, BeakerIcon, RocketLaunchIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
+import { ExperimentEntity } from '@/lib/models';
+
+// Component for displaying experiment card with run information
+function ExperimentCard({ experiment }: { experiment: ExperimentEntity }) {
+  const router = useRouter();
+  const { data: runs } = useExperimentRuns(experiment.id);
+  
+  // Calculate most recent run
+  const mostRecentRun = runs?.length 
+    ? [...runs].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+    : null;
+    
+  const handleExperimentClick = () => {
+    router.push(`/dashboard/experiments/${experiment.id}`);
+  };
+  
+  return (
+    <Card 
+      className="hover:shadow-md transition-shadow cursor-pointer"
+      onClick={handleExperimentClick}
+    >
+      <CardHeader className="pb-2">
+        <div>
+          <CardTitle className="text-lg font-semibold text-slate-900">
+            {experiment.name}
+          </CardTitle>
+          <CardDescription className="text-sm text-slate-500 mt-1">
+            Created {formatDistanceToNow(new Date(experiment.created_at), { addSuffix: true })}
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-slate-700 line-clamp-2 h-10">
+          {experiment.description || 'No description provided'}
+        </p>
+        <div className="mt-4 flex items-center text-xs text-slate-500">
+          <BeakerIcon className="h-4 w-4 mr-1" />
+          <span>ID: {experiment.id}</span>
+        </div>
+      </CardContent>
+      <CardFooter className="border-t border-slate-100 pt-4 pb-3 px-6">
+        <div className="w-full space-y-2 text-xs">
+          <div className="flex justify-between items-center text-slate-500">
+            <div className="flex items-center">
+              <RocketLaunchIcon className="h-4 w-4 mr-1" />
+              <span>{runs?.length || 0} {runs?.length === 1 ? 'run' : 'runs'}</span>
+            </div>
+            {mostRecentRun && (
+              <div className="flex items-center">
+                <CalendarIcon className="h-4 w-4 mr-1" />
+                <span>Latest run: {formatDistanceToNow(new Date(mostRecentRun.created_at), { addSuffix: true })}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
 
 export default function ExperimentsPage() {
   const router = useRouter();
   const { data: experiments, isLoading, error } = useExperiments();
-
-  // Handle navigation to experiment details
-  const handleExperimentClick = (experimentId: string) => {
-    router.push(`/dashboard/experiments/${experimentId}`);
-  };
-
-  // Function to get status icon
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
-      case 'running':
-        return <ClockIcon className="h-5 w-5 text-blue-500 animate-pulse" />;
-      case 'failed':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />;
-      default:
-        return <ClockIcon className="h-5 w-5 text-slate-400" />;
-    }
-  };
 
   if (isLoading) {
     return (
@@ -66,36 +107,7 @@ export default function ExperimentsPage() {
           </div>
         ) : (
           experiments?.map((experiment) => (
-            <Card 
-              key={experiment.id} 
-              className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleExperimentClick(experiment.id)}
-            >
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg font-semibold text-slate-900">
-                      {experiment.name}
-                    </CardTitle>
-                    <CardDescription className="text-sm text-slate-500 mt-1">
-                      Created {formatDistanceToNow(new Date(experiment.created_at), { addSuffix: true })}
-                    </CardDescription>
-                  </div>
-                  {getStatusIcon(experiment.status)}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-slate-700 line-clamp-2 h-10">
-                  {experiment.description || 'No description provided'}
-                </p>
-                <div className="mt-4 flex items-center text-xs text-slate-500">
-                  <BeakerIcon className="h-4 w-4 mr-1" />
-                  <span>
-                    ID: {experiment.id}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            <ExperimentCard key={experiment.id} experiment={experiment} />
           ))
         )}
       </div>

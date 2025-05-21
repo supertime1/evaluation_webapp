@@ -26,7 +26,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
   const error = experimentError || runsError;
   
   // Get status icon for run
-  const getStatusIcon = (status: string) => {
+  const getRunStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
@@ -96,15 +96,8 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
           <div className="flex items-center mr-4">
             <span>ID: {experimentId}</span>
           </div>
-          <div className="flex items-center mr-4">
-            <span>Created: {formatDistanceToNow(new Date(experiment.created_at), { addSuffix: true })}</span>
-          </div>
           <div className="flex items-center">
-            <span>Status: </span>
-            <span className="flex items-center ml-1">
-              {getStatusIcon(experiment.status)}
-              <span className="ml-1 capitalize">{experiment.status}</span>
-            </span>
+            <span>Created: {formatDistanceToNow(new Date(experiment.created_at), { addSuffix: true })}</span>
           </div>
         </div>
         
@@ -189,7 +182,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
                           <td className="px-6 py-4 font-mono text-xs">{run.git_commit?.substring(0, 8) || 'N/A'}</td>
                           <td className="px-6 py-4">
                             <div className="flex items-center">
-                              {getStatusIcon(run.status)}
+                              {getRunStatusIcon(run.status)}
                               <span className="ml-2 capitalize">{run.status}</span>
                             </div>
                           </td>
@@ -261,7 +254,7 @@ export default function ExperimentDetailPage({ params }: { params: Promise<{ id:
                         <td className="px-6 py-4 font-mono text-xs">{run.git_commit?.substring(0, 8) || 'N/A'}</td>
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            {getStatusIcon(run.status)}
+                            {getRunStatusIcon(run.status)}
                             <span className="ml-2 capitalize">{run.status}</span>
                           </div>
                         </td>

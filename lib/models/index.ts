@@ -3,7 +3,6 @@ export interface ExperimentEntity {
   name: string;
   description?: string;
   user_id: string;
-  status: 'pending' | 'running' | 'completed' | 'failed';
   created_at: string;
   updated_at?: string;
 }

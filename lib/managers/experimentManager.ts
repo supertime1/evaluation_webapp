@@ -85,7 +85,6 @@ export class ExperimentManager {
         ...experiment,
         id: optimisticId,
         user_id: 'current_user', // Will be replaced by the server
-        status: experiment.status || 'pending', // Default to pending if not specified
         created_at: new Date().toISOString(),
       };
       
@@ -215,7 +214,6 @@ export class ExperimentManager {
       name: apiExperiment.name,
       description: apiExperiment.description,
       user_id: apiExperiment.user_id,
-      status: apiExperiment.status,
       created_at: apiExperiment.created_at,
       updated_at: apiExperiment.updated_at
     };

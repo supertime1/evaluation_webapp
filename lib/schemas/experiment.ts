@@ -4,7 +4,6 @@ import { Run } from './run';
 export interface ExperimentBase {
   name: string;
   description?: string;
-  status?: 'pending' | 'running' | 'completed' | 'failed';
 }
 
 // Schema for creating a new experiment
@@ -19,7 +18,6 @@ export interface Experiment extends ExperimentBase {
   user_id: string;
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
-  status: 'pending' | 'running' | 'completed' | 'failed';
 }
 
 // Schema for experiment with runs
