@@ -78,7 +78,7 @@ function ExperimentCard({ experiment, className, ...props }: { experiment: Exper
           </div>
           
           {/* ID + Status pill */}
-          <div className="col-span-2 flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+          <div className="col-span-2 flex justify-between items-center mt-4">
             <span className="text-xs text-slate-500 font-mono">
               {experiment.id}
             </span>
