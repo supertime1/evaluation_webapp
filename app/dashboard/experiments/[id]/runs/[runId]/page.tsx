@@ -253,7 +253,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
                   <thead className="text-xs uppercase bg-slate-50 text-slate-700">
                     <tr>
                       <th className="px-6 py-3">Status</th>
-                      <th className="px-6 py-3">Name</th>
+                      <th className="px-6 py-3">ID</th>
                       <th className="px-6 py-3">Input</th>
                       <th className="px-6 py-3">Expected</th>
                       <th className="px-6 py-3">Actual</th>
@@ -272,7 +272,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
                             {getTestResultStatusIcon(result.success)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 font-medium">{result.name}</td>
+                        <td className="px-6 py-4 font-medium">{result.id}</td>
                         <td className="px-6 py-4 max-w-xs truncate">
                           {typeof result.input === 'string' ? result.input : JSON.stringify(result.input)}
                         </td>
