@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { use } from 'react';
 import { MetricData } from '@/lib/schemas/testResult';
+import { TestResultDetailModal } from '@/components/test-results/TestResultDetailModal';
+import { TestResult } from '@/lib/schemas/testResult';
 
 export default function RunDetailPage({ params }: { params: Promise<{ id: string; runId: string }> }) {
   const router = useRouter();
@@ -20,6 +22,10 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
   const experimentId = resolvedParams.id;
   const runId = resolvedParams.runId;
   const [activeTab, setActiveTab] = useState('results');
+  
+  // State for test result modal
+  const [selectedTestResult, setSelectedTestResult] = useState<TestResult | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const { data: experiment, isLoading: isExperimentLoading, error: experimentError } = useExperiment(experimentId);
   const { data: runWithResults, isLoading: isRunLoading, error: runError } = useRunWithResults(runId);
@@ -56,6 +62,18 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
         {metric.name}: {metric.score.toFixed(2)}
       </span>
     );
+  };
+  
+  // Handle clicking on a test result row
+  const handleTestResultClick = (testResult: TestResult) => {
+    setSelectedTestResult(testResult);
+    setIsModalOpen(true);
+  };
+  
+  // Handle closing the modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTestResult(null);
   };
   
   if (isLoading) {
@@ -214,7 +232,11 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
                   </thead>
                   <tbody>
                     {runWithResults.test_results.map(result => (
-                      <tr key={result.id} className="border-b border-slate-200 hover:bg-slate-50">
+                      <tr 
+                        key={result.id} 
+                        className="border-b border-slate-200 hover:bg-slate-50 cursor-pointer"
+                        onClick={() => handleTestResultClick(result)}
+                      >
                         <td className="px-6 py-4">
                           <span className="flex items-center">
                             {getTestResultStatusIcon(result.success)}
@@ -349,6 +371,13 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
           </CardContent>
         </Card>
       )}
+      
+      {/* Test Result Detail Modal */}
+      <TestResultDetailModal 
+        testResult={selectedTestResult}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 } 
