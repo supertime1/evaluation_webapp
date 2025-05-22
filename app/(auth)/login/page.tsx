@@ -5,16 +5,43 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+<<<<<<< HEAD
+import { useAuth } from '@/lib/hooks/useAuth';
+import { useUser } from '@/lib/hooks/useUser';
+=======
 import { authApi } from '@/lib/api/auth';
+>>>>>>> main
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+<<<<<<< HEAD
+  const { login, isAuthenticated, isLoading: authLoading, error: authError } = useAuth({ checkOnMount: false });
+  const { loadUser } = useUser();
+=======
+>>>>>>> main
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+<<<<<<< HEAD
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // // Check for registration success message
+  // useEffect(() => {
+  //   if (searchParams?.get('registered') === 'true') {
+  //     setSuccess('Account created successfully. Please log in.');
+  //   }
+  // }, [searchParams]);
+
+  // // Update local error state when auth error changes
+  // useEffect(() => {
+  //   if (authError) {
+  //     setError(authError.message);
+  //   }
+  // }, [authError]);
+=======
 
   // Check for registration success message
   useEffect(() => {
@@ -22,6 +49,15 @@ export default function LoginPage() {
       setSuccess('Account created successfully. Please log in.');
     }
   }, [searchParams]);
+  
+  // Check if already authenticated on mount
+  useEffect(() => {
+    if (authApi.isAuthenticated()) {
+      console.log('Already authenticated, redirecting to dashboard');
+      window.location.href = '/dashboard';
+    }
+  }, []);
+>>>>>>> main
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,26 +68,39 @@ export default function LoginPage() {
     try {
       console.log('Attempting login with:', email);
       
-      // Call the actual FastAPI endpoint for login
+<<<<<<< HEAD
+      // Log in first
+      await login({
+=======
+      // Call the login endpoint
       const result = await authApi.login({
-        username: email, // FastAPI expects 'username' field
+>>>>>>> main
+        username: email,
         password,
       });
       
-      console.log('Login successful, result:', result);
+<<<<<<< HEAD
+      console.log('Login successful, loading user data');
+      // Then load user data
+      await loadUser();
+      console.log('User data loaded, redirecting to dashboard');
+      // If we got this far without errors, redirect to dashboard
+      router.push('/dashboard');
+=======
+      console.log('Login result:', result);
       
-      // On success, redirect to dashboard
-      router.push('/');
+      // Check if token was set
+      if (authApi.isAuthenticated()) {
+        console.log('Authentication successful, redirecting to dashboard');
+        window.location.href = '/dashboard';
+      } else {
+        console.error('Login succeeded but no token was set');
+        setError('Login succeeded but authentication failed. Please try again.');
+      }
+>>>>>>> main
+      
     } catch (err: any) {
-      console.error('Login error details:', {
-        message: err.message,
-        response: err.response ? {
-          status: err.response.status,
-          data: err.response.data,
-          headers: err.response.headers
-        } : 'No response object',
-        request: err.request ? 'Request exists' : 'No request object',
-      });
+      console.error('Login error:', err);
       
       // Display friendly error message
       if (err.response) {
@@ -63,7 +112,11 @@ export default function LoginPage() {
       } else if (err.request) {
         setError('Unable to connect to the server. Please try again later.');
       } else {
+<<<<<<< HEAD
+        setError(err.message || 'An unexpected error occurred. Please try again.');
+=======
         setError('An unexpected error occurred. Please try again.');
+>>>>>>> main
       }
     } finally {
       setIsLoading(false);
@@ -129,9 +182,9 @@ export default function LoginPage() {
         <Button 
           type="submit" 
           className="w-full h-11 bg-slate-900 hover:bg-slate-800 mt-3" 
-          disabled={isLoading}
+          disabled={isLoading || authLoading}
         >
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoading || authLoading ? 'Signing in...' : 'Sign in'}
         </Button>
       </form>
 

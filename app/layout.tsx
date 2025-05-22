@@ -1,13 +1,20 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "../components/auth/auth-provider";
+import Providers from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "LLM Evaluation Dashboard",
+  title: "FortiEval",
   description: "A platform for evaluating LLM models using deepeval",
+  icons: {
+    icon: [
+      { url: '/favicon-large.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' }
+    ],
+    apple: { url: '/apple-touch-icon.png', type: 'image/png' },
+  },
 };
 
 export default function RootLayout({
@@ -18,7 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AuthProvider>{children}</AuthProvider>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

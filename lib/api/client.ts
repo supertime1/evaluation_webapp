@@ -1,19 +1,19 @@
 import axios from 'axios';
 
-const API_URL = 'http://127.0.0.1:8000';
-
+// Create Axios instance with defaults
 export const apiClient = axios.create({
-  baseURL: API_URL,
+  // Always use the actual backend
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important for handling cookies with JWT
+  withCredentials: true, // Important for cookies
 });
 
-// Request interceptor
+// Add a request interceptor for auth
 apiClient.interceptors.request.use(
   (config) => {
-    // You can add token from localStorage/cookies here if needed
+    // Any request configuration can be added here
     return config;
   },
   (error) => {
@@ -21,23 +21,33 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor
+// Add a response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => {
+    // Log successful responses
+    console.log(`API Response: ${response.status}`, {
+      url: response.config.url,
+      data: response.data ? 'Has data' : 'No data'
+    });
+    
     return response;
   },
-  (error) => {
-    // Handle 401 Unauthorized errors (e.g., redirect to login)
-    if (error.response && error.response.status === 401) {
-      // Only redirect to login if we're not already on the login page
-      // This prevents redirect loops
-      const currentPath = window.location.pathname;
-      if (currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/logout') {
-        // Redirect to login page
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // Handle 401 Unauthorized errors
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // Redirect to login if unauthorized
+      if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }
+      
+      return Promise.reject(error);
     }
     
+    // Handle other errors
     return Promise.reject(error);
   }
 ); 
