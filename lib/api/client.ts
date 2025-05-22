@@ -24,6 +24,12 @@ apiClient.interceptors.request.use(
 // Add a response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => {
+    // Log successful responses
+    console.log(`API Response: ${response.status}`, {
+      url: response.config.url,
+      data: response.data ? 'Has data' : 'No data'
+    });
+    
     return response;
   },
   async (error) => {

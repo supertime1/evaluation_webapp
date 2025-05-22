@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { authApi } from '@/lib/api/auth';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -34,15 +35,18 @@ export default function RegisterPage() {
     }
     
     try {
-      // This would normally call your registration API
-      console.log('Registering with:', { name, email, password });
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the actual FastAPI endpoint for registration
+      await authApi.register({
+        email,
+        password,
+        name: name || undefined, // Only send name if it's not empty
+      });
       
-      // On success, redirect to login
+      // On success, redirect to login with success message
       router.push('/login?registered=true');
-    } catch (err) {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      console.error('Registration error:', err);
+      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
