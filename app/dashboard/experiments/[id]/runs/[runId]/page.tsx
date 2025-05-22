@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useExperiment } from '@/lib/hooks/useExperimentManager';
 import { useRun, useRunWithResults } from '@/lib/hooks/useRunManager';
 import { useTestCase } from '@/lib/hooks/useTestCaseManager';
-import { ArrowLeftIcon, ClockIcon, XCircleIcon, CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ClockIcon, XCircleIcon, CheckCircleIcon, ArrowPathIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { use } from 'react';
 import { MetricData } from '@/lib/schemas/testResult';
 import { TestResultDetailModal } from '@/components/test-results/TestResultDetailModal';
 import { TestResult } from '@/lib/schemas/testResult';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export default function RunDetailPage({ params }: { params: Promise<{ id: string; runId: string }> }) {
   const router = useRouter();
@@ -26,6 +28,9 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
   // State for test result modal
   const [selectedTestResult, setSelectedTestResult] = useState<TestResult | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // State for filter: showOnlyFailed
+  const [showOnlyFailed, setShowOnlyFailed] = useState(false);
   
   const { data: experiment, isLoading: isExperimentLoading, error: experimentError } = useExperiment(experimentId);
   const { data: runWithResults, isLoading: isRunLoading, error: runError } = useRunWithResults(runId);
@@ -76,6 +81,11 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
     setSelectedTestResult(null);
   };
   
+  // Toggle the filter for failed test cases
+  const toggleFailedFilter = () => {
+    setShowOnlyFailed(!showOnlyFailed);
+  };
+  
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -100,8 +110,14 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
     );
   }
   
+  // Filter test results if showOnlyFailed is true
+  const filteredTestResults = showOnlyFailed 
+    ? runWithResults.test_results?.filter(test => !test.success) || []
+    : runWithResults.test_results || [];
+  
   const totalTests = runWithResults.test_results?.length || 0;
   const passingTests = runWithResults.test_results?.filter(test => test.success).length || 0;
+  const failingTests = totalTests - passingTests;
   const passRate = totalTests > 0 ? (passingTests / totalTests) * 100 : 0;
   
   return (
@@ -212,12 +228,26 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
       {/* Results tab content */}
       {activeTab === 'results' && (
         <Card>
-          <CardHeader>
-            <CardTitle>Test Case Results</CardTitle>
-            <CardDescription>Individual results from running test cases</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle>Test Case Results</CardTitle>
+              <CardDescription>Individual results from running test cases</CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="failed-filter" className="text-sm cursor-pointer flex items-center text-slate-700">
+                <FunnelIcon className="h-4 w-4 mr-1 text-slate-500" />
+                Failed only 
+                {failingTests > 0 && <span className="ml-1 text-red-500">({failingTests})</span>}
+              </Label>
+              <Switch 
+                id="failed-filter" 
+                checked={showOnlyFailed} 
+                onCheckedChange={toggleFailedFilter}
+              />
+            </div>
           </CardHeader>
           <CardContent>
-            {runWithResults.test_results && runWithResults.test_results.length > 0 ? (
+            {filteredTestResults.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs uppercase bg-slate-50 text-slate-700">
@@ -231,7 +261,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
                     </tr>
                   </thead>
                   <tbody>
-                    {runWithResults.test_results.map(result => (
+                    {filteredTestResults.map(result => (
                       <tr 
                         key={result.id} 
                         className="border-b border-slate-200 hover:bg-slate-50 cursor-pointer"
@@ -268,7 +298,9 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
               </div>
             ) : (
               <div className="text-center py-10 text-slate-500">
-                <p>No test results available for this run</p>
+                {showOnlyFailed 
+                  ? 'No failed test results in this run. All tests have passed!'
+                  : 'No test results available for this run'}
               </div>
             )}
           </CardContent>
