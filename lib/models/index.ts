@@ -62,4 +62,25 @@ export interface MetricDataEntity {
   error?: string | null;
   evaluation_cost?: number;
   verbose_logs?: any;
+}
+
+export interface DatasetEntity {
+  id: string; // ds_[uuid]
+  name: string;
+  description?: string;
+  is_global: boolean;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  current_version_id?: string;
+}
+
+export interface DatasetVersionEntity {
+  id: string; // dsv_[uuid]
+  dataset_id: string; // ds_[uuid]
+  version_number: number;
+  test_case_ids: string[]; // Array of tc_[uuid]
+  change_summary?: string;
+  created_at: string;
+  created_by_user_id: string;
 } 

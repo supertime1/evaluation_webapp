@@ -3,7 +3,9 @@ import {
   ExperimentEntity, 
   RunEntity, 
   TestCaseEntity, 
-  TestResultEntity 
+  TestResultEntity,
+  DatasetEntity,
+  DatasetVersionEntity
 } from '@/lib/models';
 
 class EvaluationDB extends Dexie {
@@ -12,6 +14,8 @@ class EvaluationDB extends Dexie {
   runs!: Table<RunEntity, string>;
   testCases!: Table<TestCaseEntity, string>;
   testResults!: Table<TestResultEntity, string>;
+  datasets!: Table<DatasetEntity, string>;
+  datasetVersions!: Table<DatasetVersionEntity, string>;
   
   constructor() {
     super('EvaluationDB');
@@ -21,7 +25,9 @@ class EvaluationDB extends Dexie {
       experiments: 'id, name, user_id',
       runs: 'id, experiment_id, status',
       testCases: 'id, name, type, user_id, is_global',
-      testResults: 'id, run_id, test_case_id'
+      testResults: 'id, run_id, test_case_id',
+      datasets: 'id, name, user_id, is_global',
+      datasetVersions: 'id, dataset_id, version_number'
     });
 
     // ----------------------------------------------------------------------
@@ -51,9 +57,15 @@ class EvaluationDB extends Dexie {
       }
     });
 
-    this.testResults.hook("creating", (primKey, obj: TestResultEntity) => {
-      if (!obj.run_id) {
-        throw new Error("Run ID is required");
+    this.datasets.hook("creating", (primKey, obj: DatasetEntity) => {
+      if (!obj.user_id) {
+        throw new Error("User ID is required");
+      }
+    });
+
+    this.datasetVersions.hook("creating", (primKey, obj: DatasetVersionEntity) => {
+      if (!obj.dataset_id) {
+        throw new Error("Dataset ID is required");
       }
     });
     
@@ -63,12 +75,17 @@ class EvaluationDB extends Dexie {
     // 3) Utility method to reset the entire DB
     // ----------------------------------------------------------------------
     async resetDatabase() {
-      // TODO: Split into multiple transactions to handle table limit
-      await this.transaction("rw", this.experiments, this.runs, this.testCases, this.testResults, () => {
-        // Drop all tables
-        this.tables.forEach(table => {
-          table.clear();
-        });
+      // Split into multiple transactions to handle table limit
+      await this.transaction("rw", this.experiments, this.runs, this.testCases, () => {
+        this.experiments.clear();
+        this.runs.clear();
+        this.testCases.clear();
+      });
+      
+      await this.transaction("rw", this.testResults, this.datasets, this.datasetVersions, () => {
+        this.testResults.clear();
+        this.datasets.clear();
+        this.datasetVersions.clear();
       });
     }
     
