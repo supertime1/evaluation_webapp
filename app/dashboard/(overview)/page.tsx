@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useExperiments } from '@/lib/hooks/useExperimentManager';
+import { useDatasets } from '@/lib/hooks/useDatasetManager';
 import { formatDistanceToNow } from 'date-fns';
 
 type SyncStatus = 'loading' | 'success' | 'error';
@@ -17,8 +18,9 @@ export default function DashboardPage() {
     const memberListRef = useRef<{ refresh: () => Promise<void> }>(null);
     const programListRef = useRef<{ refresh: () => Promise<void> }>(null);
     
-    // Fetch experiments using the hook
+    // Fetch experiments and datasets using the hooks
     const { data: experiments, isLoading: isExperimentsLoading, error: experimentsError } = useExperiments();
+    const { data: datasets, isLoading: isDatasetsLoading, error: datasetsError } = useDatasets();
 
     // Define initializeData outside useEffect
     const initializeData = async () => {
@@ -27,9 +29,9 @@ export default function DashboardPage() {
         
         // Use a shorter timeout since we're now fetching real data
         setTimeout(() => {
-            if (experimentsError) {
+            if (experimentsError || datasetsError) {
                 setSyncStatus('error');
-                setSyncError(experimentsError.message);
+                setSyncError(experimentsError?.message || datasetsError?.message || 'Unknown error');
             } else {
                 setSyncStatus('success');
             }
@@ -39,7 +41,7 @@ export default function DashboardPage() {
     // Initial load
     useEffect(() => {
         initializeData();
-    }, [experimentsError]);
+    }, [experimentsError, datasetsError]);
 
     const handleRefreshPrograms = async () => {
         if (isRefreshingPrograms) return;
@@ -99,7 +101,7 @@ export default function DashboardPage() {
         );
     }
 
-    const isLoading = syncStatus === 'loading' || isExperimentsLoading;
+    const isLoading = syncStatus === 'loading' || isExperimentsLoading || isDatasetsLoading;
 
     return (
         <main className="min-h-screen bg-white p-6">
@@ -178,9 +180,9 @@ export default function DashboardPage() {
                         </div>
                     </div>
 
-                    {/* Test Cases Card */}
+                    {/* Datasets Card */}
                     <div className="bg-white border border-slate-200 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
-                        <h3 className="text-lg font-semibold text-slate-900 mb-5">Test Cases</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-5">Recent Datasets</h3>
                         <div className="text-sm text-slate-700 flex-grow">
                             {isLoading ? (
                                 <div className="space-y-3">
@@ -188,21 +190,47 @@ export default function DashboardPage() {
                                     <div className="h-8 bg-slate-100 rounded animate-pulse"></div>
                                     <div className="h-8 bg-slate-100 rounded animate-pulse"></div>
                                 </div>
+                            ) : datasets && datasets.length > 0 ? (
+                                <div className="space-y-3">
+                                    {datasets.slice(0, 3).map(dataset => (
+                                        <Link 
+                                            key={dataset.id}
+                                            href={`/dashboard/datasets/${dataset.id}`}
+                                            className="block bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md px-4 py-3 transition-colors relative"
+                                        >
+                                            <div className="font-medium text-base text-slate-900">{dataset.name}</div>
+                                            <div className="text-xs text-slate-500 mt-1 flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                Created {formatDistanceToNow(new Date(dataset.created_at), { addSuffix: true })}
+                                                {dataset.is_global && (
+                                                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                        Global
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <svg className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </Link>
+                                    ))}
+                                </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full py-8">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 001.5 2.25m0 0v1.8a2.25 2.25 0 01-1.5 2.25m0 0v3.39a2.25 2.25 0 01-2.25 2.25H6.75a2.25 2.25 0 01-2.25-2.25V8.25a2.25 2.25 0 011.2-1.989m12.3 0l3.089-1.243M5.436 13.109L14.25 7.5" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                                     </svg>
-                                    <p className="text-slate-500 text-center">No test cases yet. Create your first test case.</p>
+                                    <p className="text-slate-500 text-center">No datasets yet. Create your first dataset.</p>
                                 </div>
                             )}
                         </div>
                         <div className="mt-6">
-                            <Link href="/dashboard/test-cases/new" className="block w-full">
+                            <Link href="/dashboard/datasets/new" className="block w-full">
                                 <Button 
                                     className="w-full h-11 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 font-medium transition-colors"
                                 >
-                                    Create Test Case
+                                    Create Dataset
                                 </Button>
                             </Link>
                         </div>

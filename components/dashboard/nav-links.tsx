@@ -15,7 +15,7 @@ const NavLinks: React.FC = () => {
   const links = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Experiments', href: '/dashboard/experiments', icon: BeakerIcon },
-    { name: 'Test Cases', href: '/dashboard/test-cases', icon: Squares2X2Icon },
+    { name: 'Datasets', href: '/dashboard/datasets', icon: Squares2X2Icon },
   ];
 
   return (
