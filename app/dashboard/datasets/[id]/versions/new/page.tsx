@@ -13,15 +13,16 @@ import { Label } from '@/components/ui/label';
 import { TestCaseSelector } from '@/components/datasets';
 
 interface NewVersionPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function NewVersionPage({ params }: NewVersionPageProps) {
   const router = useRouter();
-  const { data: dataset, isLoading: datasetLoading, error: datasetError } = useDataset(params.id);
-  const { data: versions = [] } = useDatasetVersions(params.id);
+  const resolvedParams = React.use(params);
+  const { data: dataset, isLoading: datasetLoading, error: datasetError } = useDataset(resolvedParams.id);
+  const { data: versions = [] } = useDatasetVersions(resolvedParams.id);
   const { data: allTestCases = [] } = useAllTestCases();
   const createVersionMutation = useCreateDatasetVersion();
 
@@ -55,7 +56,7 @@ export default function NewVersionPage({ params }: NewVersionPageProps) {
         data: versionData,
       });
       
-      router.push(`/dashboard/datasets/${params.id}/versions`);
+      router.push(`/dashboard/datasets/${resolvedParams.id}/versions`);
     } catch (error) {
       console.error('Error creating dataset version:', error);
     }

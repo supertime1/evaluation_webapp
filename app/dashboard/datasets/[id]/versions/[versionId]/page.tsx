@@ -13,16 +13,17 @@ import { TestCasePreview } from '@/components/datasets';
 import { TestCase } from '@/lib/schemas/testCase';
 
 interface VersionDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
     versionId: string;
-  };
+  }>;
 }
 
 export default function VersionDetailPage({ params }: VersionDetailPageProps) {
   const router = useRouter();
-  const { data: dataset } = useDataset(params.id);
-  const { data: version, isLoading, error } = useDatasetVersion(params.versionId);
+  const resolvedParams = React.use(params);
+  const { data: dataset } = useDataset(resolvedParams.id);
+  const { data: version, isLoading, error } = useDatasetVersion(resolvedParams.versionId);
   const { data: allTestCases = [] } = useAllTestCases();
 
   const [searchQuery, setSearchQuery] = useState('');

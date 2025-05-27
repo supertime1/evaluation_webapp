@@ -14,14 +14,15 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
 interface NewTestCasePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function NewTestCasePage({ params }: NewTestCasePageProps) {
   const router = useRouter();
-  const { data: dataset, isLoading: datasetLoading, error: datasetError } = useDataset(params.id);
+  const resolvedParams = React.use(params);
+  const { data: dataset, isLoading: datasetLoading, error: datasetError } = useDataset(resolvedParams.id);
   const createTestCaseMutation = useCreateTestCase();
   const addToDatasetMutation = useAddTestCaseToDataset();
 
@@ -84,7 +85,7 @@ export default function NewTestCasePage({ params }: NewTestCasePageProps) {
         });
       }
       
-      router.push(`/dashboard/datasets/${params.id}/test-cases`);
+      router.push(`/dashboard/datasets/${resolvedParams.id}/test-cases`);
     } catch (error) {
       console.error('Error creating test case:', error);
     }

@@ -11,14 +11,15 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
 interface EditDatasetPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditDatasetPage({ params }: EditDatasetPageProps) {
   const router = useRouter();
-  const { data: dataset, isLoading, error } = useDataset(params.id);
+  const resolvedParams = React.use(params);
+  const { data: dataset, isLoading, error } = useDataset(resolvedParams.id);
   const updateDatasetMutation = useUpdateDataset();
 
   const [formData, setFormData] = useState<DatasetUpdate>({
@@ -52,7 +53,7 @@ export default function EditDatasetPage({ params }: EditDatasetPageProps) {
         data: formData,
       });
       
-      router.push(`/dashboard/datasets/${dataset.id}`);
+      router.push(`/dashboard/datasets/${resolvedParams.id}`);
     } catch (error) {
       console.error('Error updating dataset:', error);
     }

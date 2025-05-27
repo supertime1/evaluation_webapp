@@ -1,16 +1,21 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useDataset } from '@/lib/hooks/useDatasetManager';
 import { DatasetDetailHeader, DatasetVersionHistory } from '@/components/datasets';
 
-export default function DatasetDetailPage() {
-  const params = useParams();
-  const datasetId = params.id as string;
-  
+interface DatasetDetailPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function DatasetDetailPage({ params }: DatasetDetailPageProps) {
+  const resolvedParams = React.use(params);
+  const datasetId = resolvedParams.id;
   
   const { data: dataset, isLoading, error } = useDataset(datasetId);
 

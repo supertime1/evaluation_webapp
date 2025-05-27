@@ -23,16 +23,17 @@ import {
 } from '@/components/ui/dialog';
 
 interface EditTestCasePageProps {
-  params: {
+  params: Promise<{
     id: string;
     testCaseId: string;
-  };
+  }>;
 }
 
 export default function EditTestCasePage({ params }: EditTestCasePageProps) {
   const router = useRouter();
-  const { data: dataset } = useDataset(params.id);
-  const { data: testCase, isLoading, error } = useTestCase(params.testCaseId);
+  const resolvedParams = React.use(params);
+  const { data: dataset } = useDataset(resolvedParams.id);
+  const { data: testCase, isLoading, error } = useTestCase(resolvedParams.testCaseId);
   const updateTestCaseMutation = useUpdateTestCase();
   const deleteTestCaseMutation = useDeleteTestCase();
 
@@ -113,7 +114,7 @@ export default function EditTestCasePage({ params }: EditTestCasePageProps) {
         data: updateData,
       });
       
-      router.push(`/dashboard/datasets/${params.id}/test-cases`);
+      router.push(`/dashboard/datasets/${resolvedParams.id}/test-cases`);
     } catch (error) {
       console.error('Error updating test case:', error);
     }
@@ -125,7 +126,7 @@ export default function EditTestCasePage({ params }: EditTestCasePageProps) {
     try {
       await deleteTestCaseMutation.mutateAsync(testCase.id);
       setShowDeleteDialog(false);
-      router.push(`/dashboard/datasets/${params.id}/test-cases`);
+      router.push(`/dashboard/datasets/${resolvedParams.id}/test-cases`);
     } catch (error) {
       console.error('Error deleting test case:', error);
     }
@@ -136,7 +137,7 @@ export default function EditTestCasePage({ params }: EditTestCasePageProps) {
   };
 
   const handleViewStandalone = () => {
-    window.open(`/dashboard/test-cases/${params.testCaseId}`, '_blank');
+    window.open(`/dashboard/test-cases/${resolvedParams.testCaseId}`, '_blank');
   };
 
   if (isLoading) {

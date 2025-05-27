@@ -1,16 +1,21 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useDataset } from '@/lib/hooks/useDatasetManager';
 import { DatasetVersionHistory, DatasetVersionComparison } from '@/components/datasets';
 
-export default function DatasetVersionsPage() {
-  const params = useParams();
-  const datasetId = params.id as string;
+interface DatasetVersionsPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function DatasetVersionsPage({ params }: DatasetVersionsPageProps) {
+  const resolvedParams = React.use(params);
+  const datasetId = resolvedParams.id;
   const [compareVersions, setCompareVersions] = useState<{ from: string; to: string } | null>(null);
   
   const { data: dataset, isLoading: isDatasetLoading } = useDataset(datasetId);

@@ -19,15 +19,16 @@ import {
 } from '@/components/datasets';
 
 interface TestCasesPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function TestCasesPage({ params }: TestCasesPageProps) {
   const router = useRouter();
-  const { data: dataset, isLoading: datasetLoading, error: datasetError } = useDataset(params.id);
-  const { data: versions = [] } = useDatasetVersions(params.id);
+  const resolvedParams = React.use(params);
+  const { data: dataset, isLoading: datasetLoading, error: datasetError } = useDataset(resolvedParams.id);
+  const { data: versions = [] } = useDatasetVersions(resolvedParams.id);
   const { data: allTestCases = [] } = useAllTestCases();
 
   const [selectedTestCaseIds, setSelectedTestCaseIds] = useState<string[]>([]);
@@ -115,7 +116,7 @@ export default function TestCasesPage({ params }: TestCasesPageProps) {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => router.push(`/dashboard/datasets/${params.id}/test-cases/new`)}
+            onClick={() => router.push(`/dashboard/datasets/${resolvedParams.id}/test-cases/new`)}
             className="gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -239,7 +240,7 @@ export default function TestCasesPage({ params }: TestCasesPageProps) {
               {!searchQuery && (
                 <div className="flex justify-center gap-2 pt-4">
                   <Button
-                    onClick={() => router.push(`/dashboard/datasets/${params.id}/test-cases/new`)}
+                    onClick={() => router.push(`/dashboard/datasets/${resolvedParams.id}/test-cases/new`)}
                     className="gap-2"
                   >
                     <Plus className="h-4 w-4" />
