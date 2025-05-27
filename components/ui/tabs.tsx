@@ -1,5 +1,5 @@
-import * as React from "react";
-import { cn } from "@/lib/utils";
+import * as React from "react"
+import { cn } from "@/lib/utils"
 
 const Tabs = React.forwardRef<
   HTMLDivElement,
@@ -12,10 +12,9 @@ const Tabs = React.forwardRef<
       data-default-value={defaultValue}
       {...props}
     />
-  );
-});
-
-Tabs.displayName = "Tabs";
+  )
+})
+Tabs.displayName = "Tabs"
 
 const TabsList = React.forwardRef<
   HTMLDivElement,
@@ -29,13 +28,12 @@ const TabsList = React.forwardRef<
     )}
     {...props}
   />
-));
-
-TabsList.displayName = "TabsList";
+))
+TabsList.displayName = "TabsList"
 
 interface TabsTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  value: string;
-  active?: boolean;
+  value: string
+  active?: boolean
 }
 
 const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
@@ -45,6 +43,7 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
       className={cn(
         "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         "data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm",
+        active && "bg-white text-slate-900 shadow-sm",
         className
       )}
       data-state={active ? "active" : "inactive"}
@@ -52,8 +51,23 @@ const TabsTrigger = React.forwardRef<HTMLButtonElement, TabsTriggerProps>(
       {...props}
     />
   )
-);
+)
+TabsTrigger.displayName = "TabsTrigger"
 
-TabsTrigger.displayName = "TabsTrigger";
+const TabsContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { value: string }
+>(({ className, value, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2",
+      className
+    )}
+    data-value={value}
+    {...props}
+  />
+))
+TabsContent.displayName = "TabsContent"
 
-export { Tabs, TabsList, TabsTrigger }; 
+export { Tabs, TabsList, TabsTrigger, TabsContent } 
