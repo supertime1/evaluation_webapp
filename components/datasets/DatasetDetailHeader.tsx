@@ -119,9 +119,9 @@ export function DatasetDetailHeader({ dataset, className = '' }: DatasetDetailHe
           />
           
           <Button
-            variant="outline"
+            variant="default"
             onClick={() => router.push(`/dashboard/datasets/${dataset.id}/test-cases`)}
-            className="h-11 px-4 text-blue-600 border-blue-200 hover:bg-blue-50"
+            className="h-11 px-4"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -132,7 +132,7 @@ export function DatasetDetailHeader({ dataset, className = '' }: DatasetDetailHe
           <Button
             variant="outline"
             onClick={() => router.push(`/dashboard/datasets/${dataset.id}/versions`)}
-            className="h-11 px-4 text-green-600 border-green-200 hover:bg-green-50"
+            className="h-11 px-4"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -143,7 +143,7 @@ export function DatasetDetailHeader({ dataset, className = '' }: DatasetDetailHe
           <Button
             variant="outline"
             onClick={() => setShowDeleteDialog(true)}
-            className="h-11 px-4 text-red-600 border-red-200 hover:bg-red-50"
+            className="h-11 px-4 text-red-600 hover:text-red-700 hover:bg-red-50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -195,13 +195,16 @@ export function DatasetDetailHeader({ dataset, className = '' }: DatasetDetailHe
                   <Button 
                     onClick={handleDelete} 
                     disabled={deleteMutation.isPending}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
                   </Button>
                 </>
               ) : (
-                <Button onClick={handleCloseDialog}>
+                <Button 
+                  variant="outline" 
+                  onClick={handleCloseDialog}
+                >
                   Close
                 </Button>
               )}

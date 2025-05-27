@@ -163,9 +163,9 @@ function RunCard({ run, getStatusIcon }: RunCardProps) {
         </div>
       </div>
       <Link href={`/dashboard/experiments/${run.experiment_id}/runs/${run.id}`}>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
+        <Button variant="outline" size="sm">
           View Details
-          <ArrowRightIcon className="h-4 w-4" />
+          <ArrowRightIcon className="h-4 w-4 ml-2" />
         </Button>
       </Link>
     </div>

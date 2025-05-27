@@ -5,7 +5,7 @@ import { useDatasetVersionHistory } from '@/lib/hooks/useDatasetVersionManager';
 import { DatasetVersionCreateModal } from '@/components/datasets/DatasetVersionCreateModal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusIcon, TagIcon, CalendarIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TagIcon, CalendarIcon, DocumentTextIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface DatasetVersionHistoryProps {
   datasetId: string;
@@ -190,13 +190,13 @@ function VersionCard({ version, isCurrent, isLatest, datasetId, onCompare }: Ver
             variant="outline" 
             size="sm" 
             onClick={() => onCompare(version.id)}
-            className="flex items-center gap-2"
           >
             Compare
           </Button>
         )}
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
+        <Button variant="outline" size="sm">
           View Details
+          <ArrowRightIcon className="h-4 w-4 ml-2" />
         </Button>
       </div>
     </div>
