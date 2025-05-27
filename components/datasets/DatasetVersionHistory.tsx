@@ -2,10 +2,10 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import { useDatasetVersionHistory } from '@/lib/hooks/useDatasetVersionManager';
-import { DatasetVersionCard } from '@/components/datasets/DatasetVersionCard';
 import { DatasetVersionCreateModal } from '@/components/datasets/DatasetVersionCreateModal';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TagIcon, CalendarIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 
 interface DatasetVersionHistoryProps {
   datasetId: string;
@@ -22,123 +22,183 @@ export function DatasetVersionHistory({
 }: DatasetVersionHistoryProps) {
   const { data: versions, isLoading, error, refetch } = useDatasetVersionHistory(datasetId);
 
-  if (error) {
+  if (isLoading) {
     return (
-      <div className={`bg-red-50 border border-red-200 rounded-md p-4 ${className}`}>
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-700" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TagIcon className="h-5 w-5" />
+            Version History
+          </CardTitle>
+          <CardDescription>
+            Track changes and evolution of this dataset
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-4 w-4 bg-slate-200 rounded"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-slate-200 rounded w-32"></div>
+                      <div className="h-3 bg-slate-200 rounded w-24"></div>
+                    </div>
+                  </div>
+                  <div className="h-8 bg-slate-200 rounded w-20"></div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="ml-3 flex-1">
-            <h3 className="text-sm font-medium text-red-700">
-              Failed to load version history
-            </h3>
-            <div className="mt-2 text-sm text-red-700">
-              {error.message || 'An error occurred while loading version history.'}
-            </div>
-            <div className="mt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refetch()}
-                className="text-red-700 border-red-300 hover:bg-red-100"
-              >
-                Try Again
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (isLoading) {
+  if (error) {
     return (
-      <div className={`space-y-4 ${className}`}>
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-slate-900">Version History</h3>
-          <div className="h-10 w-32 bg-slate-200 rounded animate-pulse"></div>
-        </div>
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="bg-white border border-slate-200 rounded-lg p-4 animate-pulse">
-            <div className="flex justify-between items-start mb-3">
-              <div className="h-5 bg-slate-200 rounded w-24"></div>
-              <div className="h-4 bg-slate-200 rounded w-16"></div>
-            </div>
-            <div className="h-4 bg-slate-200 rounded w-full mb-2"></div>
-            <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TagIcon className="h-5 w-5" />
+            Version History
+          </CardTitle>
+          <CardDescription>
+            Track changes and evolution of this dataset
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+            Error loading version history: {error.message}
           </div>
-        ))}
-      </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900">Version History</h3>
-          <p className="text-sm text-slate-500 mt-1">
-            {versions?.length || 0} version{versions?.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <DatasetVersionCreateModal
-          datasetId={datasetId}
-          trigger={
-            <Button className="h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md flex items-center gap-2">
-              <PlusIcon className="h-4 w-4" />
-              Create Version
-            </Button>
-          }
-        />
-      </div>
-
-      {/* Version Timeline */}
-      {versions && versions.length > 0 ? (
-        <div className="space-y-4">
-          {versions.map((version, index) => (
-            <div key={version.id} className="relative">
-              {/* Timeline connector */}
-              {index < versions.length - 1 && (
-                <div className="absolute left-6 top-16 bottom-0 w-px bg-slate-200"></div>
-              )}
-              
-                             {/* Version card */}
-               <DatasetVersionCard
-                 version={version}
-                 isCurrent={version.id === currentVersionId}
-                 isLatest={index === 0}
-                 datasetId={datasetId}
-                 showComparison={!!onCompare}
-                 onCompare={onCompare}
-               />
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <TagIcon className="h-5 w-5" />
+          Version History
+          {versions && versions.length > 0 && (
+            <span className="text-sm font-normal text-slate-500">({versions.length})</span>
+          )}
+        </CardTitle>
+        <CardDescription>
+          Track changes and evolution of this dataset
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {!versions || versions.length === 0 ? (
+          <div className="text-center py-8 text-slate-500">
+            <TagIcon className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+            <p className="text-lg font-medium mb-2">No versions yet</p>
+            <p className="text-sm mb-4">
+              Create your first version to start tracking changes to this dataset.
+            </p>
+            <DatasetVersionCreateModal
+              datasetId={datasetId}
+              trigger={
+                <Button className="h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md">
+                  Create First Version
+                </Button>
+              }
+            />
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {versions.map((version, index) => (
+              <VersionCard 
+                key={version.id} 
+                version={version} 
+                isCurrent={version.id === currentVersionId}
+                isLatest={index === 0}
+                datasetId={datasetId}
+                onCompare={onCompare}
+              />
+            ))}
+            <div className="pt-3 border-t border-slate-200">
+              <DatasetVersionCreateModal
+                datasetId={datasetId}
+                trigger={
+                  <Button variant="outline" className="w-full flex items-center gap-2">
+                    <PlusIcon className="h-4 w-4" />
+                    Create New Version
+                  </Button>
+                }
+              />
             </div>
-          ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface VersionCardProps {
+  version: any;
+  isCurrent: boolean;
+  isLatest: boolean;
+  datasetId: string;
+  onCompare?: (versionId: string) => void;
+}
+
+function VersionCard({ version, isCurrent, isLatest, datasetId, onCompare }: VersionCardProps) {
+  return (
+    <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+      <div className="flex items-center space-x-3">
+        <TagIcon className="h-4 w-4 text-slate-400" />
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-slate-900">
+              Version {version.version_number}
+            </span>
+            {isCurrent && (
+              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                Current
+              </span>
+            )}
+            {isLatest && (
+              <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
+                Latest
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+            <span className="flex items-center gap-1">
+              <DocumentTextIcon className="h-3 w-3" />
+              {version.test_case_ids?.length || 0} test cases
+            </span>
+            <span className="flex items-center gap-1">
+              <CalendarIcon className="h-3 w-3" />
+              {formatDistanceToNow(new Date(version.created_at), { addSuffix: true })}
+            </span>
+          </div>
+          {version.change_summary && (
+            <div className="text-sm text-slate-600 mt-2 italic">
+              "{version.change_summary}"
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="text-center py-8">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-          </svg>
-          <h4 className="text-lg font-medium text-slate-900 mb-2">
-            No versions yet
-          </h4>
-          <p className="text-slate-500 mb-4">
-            Create your first version to start tracking changes to this dataset.
-          </p>
-          <DatasetVersionCreateModal
-            datasetId={datasetId}
-            trigger={
-              <Button className="h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md">
-                Create First Version
-              </Button>
-            }
-          />
-        </div>
-      )}
+      </div>
+      <div className="flex items-center gap-2">
+        {onCompare && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => onCompare(version.id)}
+            className="flex items-center gap-2"
+          >
+            Compare
+          </Button>
+        )}
+        <Button variant="outline" size="sm" className="flex items-center gap-2">
+          View Details
+        </Button>
+      </div>
     </div>
   );
 } 
