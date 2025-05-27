@@ -83,7 +83,10 @@ export function DatasetCreateModal({ trigger, dataset, onSuccess }: DatasetCreat
       onSuccess?.();
     } catch (error) {
       console.error('Failed to save dataset:', error);
-      setErrors({ submit: 'Failed to save dataset. Please try again.' });
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to save dataset. Please try again.';
+      setErrors({ submit: errorMessage });
     }
   };
 

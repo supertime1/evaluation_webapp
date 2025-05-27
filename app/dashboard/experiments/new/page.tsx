@@ -26,8 +26,7 @@ export default function NewExperimentPage() {
     createExperiment(
       { 
         name, 
-        description: description || undefined,
-        status: 'pending'
+        description: description || undefined
       },
       {
         onSuccess: (data) => {

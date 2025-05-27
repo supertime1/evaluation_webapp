@@ -12,7 +12,7 @@ export class DatasetManager {
   // Get datasets with caching
   async getDatasets(): Promise<DatasetEntity[]> {
     // Try from IndexedDB first
-    const cachedDatasets = await db.datasets.toArray();
+    const cachedDatasets = await db.datasets.where('is_global').equals(0).toArray();
     
     try {
       // Fetch from API
@@ -24,11 +24,20 @@ export class DatasetManager {
       
       return datasets;
     } catch (error) {
+      console.warn('Failed to fetch datasets from API, using cached data:', error);
+      
       // Return cache on error if available
       if (cachedDatasets.length > 0) {
         return cachedDatasets;
       }
-      throw error;
+      
+      // Enhance error message for better UX
+      const enhancedError = new Error(
+        error instanceof Error 
+          ? `Unable to load datasets: ${error.message}` 
+          : 'Unable to load datasets. Please check your connection and try again.'
+      );
+      throw enhancedError;
     }
   }
 
@@ -46,12 +55,21 @@ export class DatasetManager {
       
       return datasets;
     } catch (error) {
+      console.warn('Failed to fetch global datasets from API, using cached data:', error);
+      
       // Fallback to cached global datasets
       const cachedGlobalDatasets = await db.datasets.where('is_global').equals(1).toArray();
       if (cachedGlobalDatasets.length > 0) {
         return cachedGlobalDatasets;
       }
-      throw error;
+      
+      // Enhance error message for better UX
+      const enhancedError = new Error(
+        error instanceof Error 
+          ? `Unable to load global datasets: ${error.message}` 
+          : 'Unable to load global datasets. Please check your connection and try again.'
+      );
+      throw enhancedError;
     }
   }
 

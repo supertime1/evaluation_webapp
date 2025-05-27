@@ -2,7 +2,7 @@
 
 import { Dataset } from '@/lib/schemas/dataset';
 import { DatasetCard } from './DatasetCard';
-import Link from 'next/link';
+import { DatasetCreateModal } from './DatasetCreateModal';
 import { Button } from '@/components/ui/button';
 
 interface DatasetListProps {
@@ -50,15 +50,17 @@ export function DatasetList({
         <h3 className="text-lg font-medium text-slate-900 mb-2">
           {emptyStateTitle}
         </h3>
-        <p className="text-slate-500 mb-6">
+        <p className="text-slate-500 mb-6 max-w-md mx-auto">
           {emptyStateDescription}
         </p>
         {showCreateButton && (
-          <Link href="/dashboard/datasets/new">
-            <Button className="h-11 px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-md">
-              Create Your First Dataset
-            </Button>
-          </Link>
+          <DatasetCreateModal
+            trigger={
+              <Button className="h-11 px-6 bg-slate-900 hover:bg-slate-800 text-white rounded-md">
+                Create Your First Dataset
+              </Button>
+            }
+          />
         )}
       </div>
     );
