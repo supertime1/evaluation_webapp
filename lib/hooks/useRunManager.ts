@@ -18,6 +18,17 @@ export function useExperimentRuns(experimentId: string) {
 }
 
 /**
+ * Hook for fetching all runs that use a specific dataset version (from local cache)
+ */
+export function useDatasetVersionRuns(datasetVersionId: string) {
+  return useQuery({
+    queryKey: [RUNS_QUERY_KEY, { datasetVersionId }],
+    queryFn: () => runManager.getRunsByDatasetVersion(datasetVersionId),
+    enabled: !!datasetVersionId, // Only run the query if datasetVersionId is provided
+  });
+}
+
+/**
  * Hook for fetching a specific run
  */
 export function useRun(id: string) {

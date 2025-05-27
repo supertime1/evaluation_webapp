@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useDataset } from '@/lib/hooks/useDatasetManager';
 import { DatasetDetailHeader, DatasetVersionHistory } from '@/components/datasets';
+import { DatasetRunsUsage } from '@/components/datasets/DatasetRunsUsage';
 
 interface DatasetDetailPageProps {
   params: Promise<{
@@ -165,6 +166,12 @@ export default function DatasetDetailPage({ params }: DatasetDetailPageProps) {
         <DatasetVersionHistory
           datasetId={datasetId}
           currentVersionId={dataset.current_version_id}
+        />
+
+        {/* Dataset Runs Usage */}
+        <DatasetRunsUsage 
+          datasetVersionId={dataset.current_version_id} 
+          datasetName={dataset.name}
         />
       </div>
     </div>

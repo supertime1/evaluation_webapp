@@ -23,7 +23,7 @@ class EvaluationDB extends Dexie {
     // Define table schemas
     this.version(1).stores({
       experiments: 'id, name, user_id',
-      runs: 'id, experiment_id, status',
+      runs: 'id, experiment_id, dataset_version_id, status',
       testCases: 'id, name, type, user_id, is_global',
       testResults: 'id, run_id, test_case_id',
       datasets: 'id, name, user_id, is_global',
@@ -42,6 +42,9 @@ class EvaluationDB extends Dexie {
     this.runs.hook("creating", (primKey, obj: RunEntity) => {
       if (!obj.experiment_id) {
         throw new Error("Experiment ID is required");
+      }
+      if (!obj.dataset_version_id) {
+        throw new Error("Dataset version ID is required");
       }
     });
 

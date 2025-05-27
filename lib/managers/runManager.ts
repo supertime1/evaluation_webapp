@@ -225,12 +225,31 @@ export class RunManager {
   }
   
   /**
+   * Get runs by dataset version ID from local cache across all experiments
+   */
+  async getRunsByDatasetVersion(datasetVersionId: string): Promise<RunEntity[]> {
+    try {
+      // Search in the local cache since the backend doesn't support this endpoint
+      const cachedRuns = await db.runs
+        .where('dataset_version_id')
+        .equals(datasetVersionId)
+        .toArray();
+      
+      return cachedRuns;
+    } catch (error) {
+      console.error(`Error in getRunsByDatasetVersion(${datasetVersionId}):`, error);
+      throw error;
+    }
+  }
+  
+  /**
    * Transform API response to local entity format
    */
   private transformToEntity(apiRun: Run): RunEntity {
     return {
       id: apiRun.id,
       experiment_id: apiRun.experiment_id,
+      dataset_version_id: apiRun.dataset_version_id,
       git_commit: apiRun.git_commit,
       hyperparameters: apiRun.hyperparameters,
       status: apiRun.status,

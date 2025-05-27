@@ -17,6 +17,7 @@ import { TestResultDetailModal } from '@/components/test-results/TestResultDetai
 import { TestResult } from '@/lib/schemas/testResult';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { RunDatasetInfo } from '@/components/datasets/RunDatasetInfo';
 
 export default function RunDetailPage({ params }: { params: Promise<{ id: string; runId: string }> }) {
   const router = useRouter();
@@ -223,6 +224,11 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
             <CardTitle className="text-2xl">{passRate.toFixed(1)}%</CardTitle>
           </CardHeader>
         </Card>
+      </div>
+
+      {/* Dataset Information */}
+      <div className="mb-6">
+        <RunDatasetInfo datasetVersionId={(runWithResults as any).dataset_version_id} />
       </div>
       
       {/* Results tab content */}

@@ -16,6 +16,7 @@ export interface RunBase {
 // Schema for creating a new run
 export interface RunCreate extends RunBase {
   experiment_id: string; // Pattern: ^exp_[a-f0-9]{8}$
+  dataset_version_id: string; // Pattern: ^dsv_[a-f0-9]{8}$
 }
 
 // Schema for updating an existing run
@@ -30,6 +31,7 @@ export interface RunUpdate {
 export interface Run extends RunBase {
   id: string; // Pattern: ^run_[a-f0-9]{8}$
   experiment_id: string; // Pattern: ^exp_[a-f0-9]{8}$
+  dataset_version_id: string; // Pattern: ^dsv_[a-f0-9]{8}$
   status: RunStatus;
   started_at?: string; // ISO datetime string
   finished_at?: string; // ISO datetime string

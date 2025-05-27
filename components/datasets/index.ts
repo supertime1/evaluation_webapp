@@ -4,6 +4,8 @@ export { DatasetCreateModal } from './DatasetCreateModal';
 export { DatasetDetailHeader } from './DatasetDetailHeader';
 export { GlobalDatasetBadge } from './GlobalDatasetBadge';
 export { DatasetIdCopyButton } from './DatasetIdCopyButton';
+export { DatasetRunsUsage } from './DatasetRunsUsage';
+export { RunDatasetInfo } from './RunDatasetInfo';
 
 export { DatasetVersionHistory } from './DatasetVersionHistory';
 export { DatasetVersionCard } from './DatasetVersionCard';

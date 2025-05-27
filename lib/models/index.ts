@@ -10,6 +10,7 @@ export interface ExperimentEntity {
 export interface RunEntity {
   id: string;
   experiment_id: string;
+  dataset_version_id: string;
   git_commit?: string;
   hyperparameters?: Record<string, any>;
   status: 'pending' | 'running' | 'completed' | 'failed';
