@@ -47,6 +47,43 @@ apiClient.interceptors.response.use(
       return Promise.reject(error);
     }
     
+    // Handle 400 Bad Request errors (validation errors, business logic violations)
+    if (error.response?.status === 400) {
+      const errorDetail = error.response?.data?.detail;
+      
+      // Check for dataset deletion with associated runs
+      if (typeof errorDetail === 'string' && errorDetail.includes('runs that depend on this dataset')) {
+        error.message = errorDetail; // Use the backend's descriptive message
+      } else if (typeof errorDetail === 'string') {
+        error.message = errorDetail;
+      } else {
+        error.message = 'Bad request. Please check your input and try again.';
+      }
+    }
+    
+    // Handle 500 Internal Server Errors with better messages
+    if (error.response?.status === 500) {
+      const errorDetail = error.response?.data?.detail;
+      
+      // Check for specific constraint violations
+      if (typeof errorDetail === 'string' && errorDetail.includes('IntegrityError')) {
+        if (errorDetail.includes('NotNullViolationError') && errorDetail.includes('dataset_version_id')) {
+          error.message = 'Cannot delete dataset: There are experiment runs that depend on this dataset. Please delete the associated experiment runs first.';
+        } else if (errorDetail.includes('ForeignKeyViolationError')) {
+          error.message = 'Cannot delete: This item is referenced by other records. Please delete the dependent records first.';
+        } else {
+          error.message = 'Database constraint violation. This operation cannot be completed due to data dependencies.';
+        }
+      } else {
+        error.message = 'Internal server error. Please try again or contact support.';
+      }
+    }
+    
+    // Handle network errors
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      error.message = 'Network error. Please check your connection and ensure the backend server is running.';
+    }
+    
     // Handle other errors
     return Promise.reject(error);
   }

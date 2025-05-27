@@ -9,6 +9,14 @@ import { DatasetIdCopyButton } from './DatasetIdCopyButton';
 import { DatasetCreateModal } from './DatasetCreateModal';
 import { useDeleteDataset } from '@/lib/hooks/useDatasetManager';
 import { useRouter } from 'next/navigation';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface DatasetDetailHeaderProps {
   dataset: Dataset;
@@ -16,17 +24,36 @@ interface DatasetDetailHeaderProps {
 }
 
 export function DatasetDetailHeader({ dataset, className = '' }: DatasetDetailHeaderProps) {
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const deleteMutation = useDeleteDataset();
   const router = useRouter();
 
   const handleDelete = async () => {
     try {
+      setDeleteError(null);
       await deleteMutation.mutateAsync(dataset.id);
+      setShowDeleteDialog(false);
       router.push('/dashboard/datasets');
-    } catch (error) {
-      console.error('Failed to delete dataset:', error);
+    } catch (error: any) {
+      // Handle the error gracefully
+      const errorMessage = error.message || 'Failed to delete dataset. Please try again.';
+      setDeleteError(errorMessage);
+      
+      // Log appropriately based on error type
+      if (error.name === 'BusinessRuleViolation') {
+        // This is expected behavior when there are dependent runs
+        console.info('Dataset deletion prevented by business rules:', errorMessage);
+      } else {
+        // This is an unexpected error
+        console.error('Unexpected error during dataset deletion:', error);
+      }
     }
+  };
+
+  const handleCloseDialog = () => {
+    setShowDeleteDialog(false);
+    setDeleteError(null);
   };
 
   return (
@@ -113,44 +140,75 @@ export function DatasetDetailHeader({ dataset, className = '' }: DatasetDetailHe
             View Versions
           </Button>
           
-          {!showDeleteConfirm ? (
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="h-11 px-4 text-red-600 border-red-200 hover:bg-red-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Delete
-            </Button>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-red-600 font-medium">
-                Are you sure?
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="h-9 px-3 text-xs"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleDelete}
-                  disabled={deleteMutation.isPending}
-                  className="h-9 px-3 text-xs bg-red-600 hover:bg-red-700"
-                >
-                  {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-                </Button>
-              </div>
-            </div>
-          )}
+          <Button
+            variant="outline"
+            onClick={() => setShowDeleteDialog(true)}
+            className="h-11 px-4 text-red-600 border-red-200 hover:bg-red-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+          </Button>
         </div>
       </div>
+
+      {showDeleteDialog && (
+        <Dialog open={showDeleteDialog} onOpenChange={handleCloseDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Delete Dataset</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this dataset? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {deleteError && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4 my-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">
+                      Cannot Delete Dataset
+                    </h3>
+                    <div className="mt-2 text-sm text-red-700">
+                      <p>{deleteError}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <DialogFooter>
+              {!deleteError ? (
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCloseDialog}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleDelete} 
+                    disabled={deleteMutation.isPending}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={handleCloseDialog}>
+                  Close
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 } 

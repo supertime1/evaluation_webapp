@@ -120,13 +120,56 @@ export class DatasetManager {
 
   // Delete dataset
   async deleteDataset(datasetId: string): Promise<void> {
-    await datasetApi.deleteDataset(datasetId);
-    
-    // Remove from cache
-    await db.datasets.delete(datasetId);
-    
-    // Also remove associated versions from cache
-    await db.datasetVersions.where('dataset_id').equals(datasetId).delete();
+    try {
+      await datasetApi.deleteDataset(datasetId);
+      
+      // Remove from cache
+      await db.datasets.delete(datasetId);
+      
+      // Also remove associated versions from cache
+      await db.datasetVersions.where('dataset_id').equals(datasetId).delete();
+    } catch (error: any) {
+      // Handle 400 errors (business logic violations from backend)
+      if (error.response?.status === 400) {
+        // The backend now returns descriptive error messages for 400 errors
+        // Clean up the message format for better display
+        let errorMessage = error.message || 'Cannot delete dataset due to validation error.';
+        
+        // Extract and format run IDs more cleanly
+        const runIdMatch = errorMessage.match(/\['([^']+)'\]/);
+        if (runIdMatch) {
+          const runIds = runIdMatch[1].split("', '");
+          const formattedRunIds = runIds.map((id: string) => id.replace(/^run_/, '')).join(', ');
+          errorMessage = errorMessage.replace(/\['[^']+'\]/, formattedRunIds);
+        }
+        
+        // Clean up any remaining array formatting
+        errorMessage = errorMessage.replace(/\['/g, '').replace(/'\]/g, '').replace(/', '/g, ', ');
+        
+        // This is expected behavior, not an error - log as info
+        console.info('Dataset deletion prevented due to business rules:', errorMessage);
+        
+        // Create a user-friendly error for the UI
+        const userError = new Error(errorMessage);
+        userError.name = 'BusinessRuleViolation';
+        throw userError;
+      }
+      
+      // Handle 500 errors (constraint violations that shouldn't happen with the new backend logic)
+      if (error.response?.status === 500 && 
+          (error.response?.data?.detail?.includes('IntegrityError') ||
+           error.message?.includes('constraint'))) {
+        console.error('Unexpected constraint violation:', error);
+        throw new Error(
+          'Cannot delete dataset: There are experiment runs that depend on this dataset. ' +
+          'Please delete the associated experiment runs first, or contact your administrator.'
+        );
+      }
+      
+      // Re-throw other errors as-is (these are unexpected)
+      console.error('Unexpected error during dataset deletion:', error);
+      throw error;
+    }
   }
 
   // Add test case to dataset
