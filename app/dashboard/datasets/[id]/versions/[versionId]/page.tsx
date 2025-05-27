@@ -33,8 +33,16 @@ export default function VersionDetailPage({ params }: VersionDetailPageProps) {
     version?.test_case_ids.includes(tc.id)
   );
 
+  // Deduplicate test cases by ID to prevent duplicate keys
+  const uniqueVersionTestCases = versionTestCases.reduce((acc, testCase) => {
+    if (!acc.find(tc => tc.id === testCase.id)) {
+      acc.push(testCase);
+    }
+    return acc;
+  }, [] as typeof versionTestCases);
+
   // Filter test cases based on search
-  const filteredTestCases = versionTestCases.filter(tc => {
+  const filteredTestCases = uniqueVersionTestCases.filter(tc => {
     if (!searchQuery) return true;
     
     const query = searchQuery.toLowerCase();
@@ -176,7 +184,7 @@ export default function VersionDetailPage({ params }: VersionDetailPageProps) {
           />
         </div>
         <div className="text-sm text-slate-600">
-          {filteredTestCases.length} of {versionTestCases.length} test cases
+          {filteredTestCases.length} of {uniqueVersionTestCases.length} test cases
         </div>
       </div>
 
@@ -222,7 +230,7 @@ export default function VersionDetailPage({ params }: VersionDetailPageProps) {
       {/* Summary */}
       {filteredTestCases.length > 0 && (
         <div className="text-center text-sm text-slate-500 py-4">
-          Showing {filteredTestCases.length} of {versionTestCases.length} test cases
+          Showing {filteredTestCases.length} of {uniqueVersionTestCases.length} test cases
           {searchQuery && ` matching "${searchQuery}"`}
         </div>
       )}

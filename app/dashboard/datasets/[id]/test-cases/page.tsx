@@ -45,8 +45,16 @@ export default function TestCasesPage({ params }: TestCasesPageProps) {
     currentTestCaseIds.includes(tc.id)
   );
 
+  // Deduplicate test cases by ID to prevent duplicate keys
+  const uniqueDatasetTestCases = datasetTestCases.reduce((acc, testCase) => {
+    if (!acc.find(tc => tc.id === testCase.id)) {
+      acc.push(testCase);
+    }
+    return acc;
+  }, [] as typeof datasetTestCases);
+
   // Filter test cases based on search
-  const filteredTestCases = datasetTestCases.filter(tc => {
+  const filteredTestCases = uniqueDatasetTestCases.filter(tc => {
     if (!searchQuery) return true;
     
     const query = searchQuery.toLowerCase();
@@ -151,7 +159,7 @@ export default function TestCasesPage({ params }: TestCasesPageProps) {
               {currentVersion && (
                 <span>Current Version: {currentVersion.version_number}</span>
               )}
-              <span>{datasetTestCases.length} test cases</span>
+              <span>{uniqueDatasetTestCases.length} test cases</span>
             </div>
           </div>
         </div>

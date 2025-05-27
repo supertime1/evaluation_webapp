@@ -32,7 +32,7 @@ export function TestCaseSelector({
 
   // Filter and search test cases
   const filteredTestCases = useMemo(() => {
-    return testCases.filter(testCase => {
+    const filtered = testCases.filter(testCase => {
       // Exclude specified test cases
       if (excludeTestCaseIds.includes(testCase.id)) {
         return false;
@@ -62,6 +62,14 @@ export function TestCaseSelector({
 
       return true;
     });
+
+    // Deduplicate by ID to prevent duplicate keys
+    return filtered.reduce((acc, testCase) => {
+      if (!acc.find(tc => tc.id === testCase.id)) {
+        acc.push(testCase);
+      }
+      return acc;
+    }, [] as typeof filtered);
   }, [testCases, searchQuery, typeFilter, showGlobalOnly, excludeTestCaseIds]);
 
   // Get unique test case types for filter
