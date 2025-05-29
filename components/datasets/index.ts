@@ -14,4 +14,5 @@ export { DatasetVersionCreateModal } from './DatasetVersionCreateModal';
 export { DatasetVersionDetailModal } from './DatasetVersionDetailModal';
 
 // Test Case Integration Components
-export { TestCasePreview } from './TestCasePreview'; 
+export { TestCasePreview } from './TestCasePreview';
+export { TestCaseDetailModal } from './TestCaseDetailModal'; 

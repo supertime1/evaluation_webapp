@@ -11,7 +11,8 @@ import { useCreateTestCase } from '@/lib/hooks/useTestCaseManager';
 import { DatasetVersionCreate } from '@/lib/schemas/datasetVersion';
 import { TestCaseCreate } from '@/lib/schemas/testCase';
 import { TestCase } from '@/lib/schemas/testCase';
-import { Plus, Minus, X } from 'lucide-react';
+import { TestCaseDetailModal } from './TestCaseDetailModal';
+import { Plus, Minus, X, Eye } from 'lucide-react';
 
 interface DatasetVersionCreateModalProps {
   datasetId: string;
@@ -264,6 +265,11 @@ export function DatasetVersionCreateModal({
       return;
     }
 
+    if (!newTestCaseForm.input || !newTestCaseForm.input.toString().trim()) {
+      setErrors({ ...errors, newTestCase: 'Test case input is required' });
+      return;
+    }
+
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const newTestCase: NewTestCase = {
       ...newTestCaseForm,
@@ -349,17 +355,40 @@ export function DatasetVersionCreateModal({
                       className="flex items-center justify-between p-3 hover:bg-slate-50 border-b border-slate-200 last:border-b-0"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">
-                          {testCase.name}
-                        </p>
-                        <p className="text-xs text-slate-500 truncate">
-                          {Array.isArray(testCase.input) 
-                            ? `${testCase.input.length} input items`
-                            : testCase.input || 'No input'
+                        <TestCaseDetailModal
+                          testCase={testCase}
+                          trigger={
+                            <button
+                              type="button"
+                              className="text-left w-full group hover:text-slate-900 transition-colors"
+                            >
+                              <p className="text-sm font-medium text-slate-900 truncate group-hover:text-blue-600">
+                                {testCase.name}
+                              </p>
+                              <p className="text-xs text-slate-500 truncate">
+                                {Array.isArray(testCase.input) 
+                                  ? `${testCase.input.length} input items`
+                                  : testCase.input || 'No input'
+                                }
+                              </p>
+                            </button>
                           }
-                        </p>
+                        />
                       </div>
                       <div className="flex items-center gap-2">
+                        <TestCaseDetailModal
+                          testCase={testCase}
+                          trigger={
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-slate-400 hover:text-slate-600"
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                          }
+                        />
                         <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded font-mono">
                           {testCase.id.slice(-8)}
                         </span>
@@ -404,20 +433,24 @@ export function DatasetVersionCreateModal({
               {/* New Test Case Form */}
               {showAddForm && (
                 <div className="border border-slate-300 rounded-md p-4 bg-slate-50">
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div>
-                      <Label className="text-xs font-medium text-slate-700">Name *</Label>
+                      <Label className="text-xs font-medium text-slate-700">
+                        Name <span className="text-red-500">*</span>
+                      </Label>
                       <input
                         type="text"
                         value={newTestCaseForm.name}
                         onChange={(e) => setNewTestCaseForm(prev => ({ ...prev, name: e.target.value }))}
                         className="w-full h-8 px-3 border border-slate-300 rounded-md focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-sm"
-                        placeholder="Test case name"
+                        placeholder="Test case name (required)"
                       />
                     </div>
                     
                     <div>
-                      <Label className="text-xs font-medium text-slate-700">Type</Label>
+                      <Label className="text-xs font-medium text-slate-700">
+                        Type <span className="text-red-500">*</span>
+                      </Label>
                       <select
                         value={newTestCaseForm.type}
                         onChange={(e) => setNewTestCaseForm(prev => ({ ...prev, type: e.target.value as any }))}
@@ -430,35 +463,101 @@ export function DatasetVersionCreateModal({
                     </div>
 
                     <div>
-                      <Label className="text-xs font-medium text-slate-700">Input</Label>
+                      <Label className="text-xs font-medium text-slate-700">
+                        Input <span className="text-red-500">*</span>
+                      </Label>
                       <textarea
                         value={newTestCaseForm.input?.toString() || ''}
                         onChange={(e) => setNewTestCaseForm(prev => ({ ...prev, input: e.target.value }))}
                         className="w-full h-20 px-3 py-2 border border-slate-300 rounded-md focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-sm resize-none"
-                        placeholder="Test input"
+                        placeholder="Test input (required - can be text or JSON for complex inputs)"
                       />
                     </div>
 
                     <div>
-                      <Label className="text-xs font-medium text-slate-700">Expected Output</Label>
+                      <Label className="text-xs font-medium text-slate-700">
+                        Expected Output <span className="text-slate-400">(optional)</span>
+                      </Label>
                       <textarea
                         value={newTestCaseForm.expected_output?.toString() || ''}
                         onChange={(e) => setNewTestCaseForm(prev => ({ ...prev, expected_output: e.target.value }))}
                         className="w-full h-20 px-3 py-2 border border-slate-300 rounded-md focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-sm resize-none"
-                        placeholder="Expected output"
+                        placeholder="Expected output from the model"
                       />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs font-medium text-slate-700">
+                        Context <span className="text-slate-400">(optional)</span>
+                      </Label>
+                      <textarea
+                        value={Array.isArray(newTestCaseForm.context) 
+                          ? newTestCaseForm.context.join('\n') 
+                          : (newTestCaseForm.context || '').toString()
+                        }
+                        onChange={(e) => setNewTestCaseForm(prev => ({ 
+                          ...prev, 
+                          context: e.target.value.split('\n').filter(line => line.trim() !== '') 
+                        }))}
+                        className="w-full h-16 px-3 py-2 border border-slate-300 rounded-md focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-sm resize-none"
+                        placeholder="Context information (one item per line)"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">Enter each context item on a new line</p>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs font-medium text-slate-700">
+                        Retrieval Context <span className="text-slate-400">(optional)</span>
+                      </Label>
+                      <textarea
+                        value={Array.isArray(newTestCaseForm.retrieval_context) 
+                          ? newTestCaseForm.retrieval_context.join('\n') 
+                          : (newTestCaseForm.retrieval_context || '').toString()
+                        }
+                        onChange={(e) => setNewTestCaseForm(prev => ({ 
+                          ...prev, 
+                          retrieval_context: e.target.value.split('\n').filter(line => line.trim() !== '') 
+                        }))}
+                        className="w-full h-16 px-3 py-2 border border-slate-300 rounded-md focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-sm resize-none"
+                        placeholder="Documents or context retrieved for this test (one item per line)"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">Enter each retrieval context item on a new line</p>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs font-medium text-slate-700">
+                        Additional Metadata <span className="text-slate-400">(optional)</span>
+                      </Label>
+                      <textarea
+                        value={typeof newTestCaseForm.additional_metadata === 'object' && newTestCaseForm.additional_metadata !== null
+                          ? JSON.stringify(newTestCaseForm.additional_metadata, null, 2)
+                          : (newTestCaseForm.additional_metadata || '').toString()
+                        }
+                        onChange={(e) => {
+                          try {
+                            const parsed = e.target.value.trim() ? JSON.parse(e.target.value) : {};
+                            setNewTestCaseForm(prev => ({ ...prev, additional_metadata: parsed }));
+                          } catch {
+                            // If JSON is invalid, store as string for now
+                            setNewTestCaseForm(prev => ({ ...prev, additional_metadata: { raw: e.target.value } }));
+                          }
+                        }}
+                        className="w-full h-16 px-3 py-2 border border-slate-300 rounded-md focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-sm resize-none font-mono"
+                        placeholder='Additional metadata as JSON, e.g. {"tags": ["important"], "difficulty": "medium"}'
+                      />
+                      <p className="text-xs text-slate-500 mt-1">Enter valid JSON for additional metadata</p>
                     </div>
 
                     {errors.newTestCase && (
                       <p className="text-xs text-red-600">{errors.newTestCase}</p>
                     )}
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
                       <Button
                         type="button"
                         onClick={handleAddNewTestCase}
                         disabled={isLoading}
-                        className="h-7 px-3 text-xs bg-slate-900 hover:bg-slate-800"
+                        className="h-8 px-3 text-xs bg-slate-900 hover:bg-slate-800"
                       >
                         Add Test Case
                       </Button>
@@ -469,7 +568,7 @@ export function DatasetVersionCreateModal({
                           setShowAddForm(false);
                           setErrors({});
                         }}
-                        className="h-7 px-3 text-xs"
+                        className="h-8 px-3 text-xs"
                       >
                         Cancel
                       </Button>

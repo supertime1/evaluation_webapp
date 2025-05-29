@@ -19,7 +19,7 @@ export type TestCaseInput = string | (string | MLLMImage)[];
 export interface TestCaseBase {
   name: string;
   type: string;
-  input?: TestCaseInput;
+  input: TestCaseInput;
   expected_output?: string;
   context?: string[];
   retrieval_context?: string[];

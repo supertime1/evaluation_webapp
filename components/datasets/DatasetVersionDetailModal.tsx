@@ -6,8 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useDatasetVersionTestCases } from '@/lib/hooks/useDatasetVersionManager';
-import { TestCasePreview } from '@/components/datasets/TestCasePreview';
-import { Search, FileText, Calendar, Hash, Tag } from 'lucide-react';
+import { DatasetVersion } from '@/lib/schemas/datasetVersion';
+import { TestCaseDetailModal } from './TestCaseDetailModal';
+import { Eye, FileText, Hash, Clock, TestTube, Search, Calendar, Tag } from 'lucide-react';
 
 interface DatasetVersionDetailModalProps {
   version: any;
@@ -153,11 +154,64 @@ export function DatasetVersionDetailModal({
             ) : (
               <div className="space-y-3">
                 {filteredTestCases.map((testCase) => (
-                  <TestCasePreview
+                  <div
                     key={testCase.id}
-                    testCase={testCase}
-                    className="hover:shadow-md transition-shadow"
-                  />
+                    className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <TestCaseDetailModal
+                          testCase={testCase}
+                          trigger={
+                            <button
+                              type="button"
+                              className="text-left w-full group hover:text-slate-900 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-sm font-medium text-slate-900 truncate group-hover:text-blue-600">
+                                  {testCase.name}
+                                </h3>
+                                <Badge variant="secondary" className="text-xs">
+                                  {testCase.type.toUpperCase()}
+                                </Badge>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-xs text-slate-500 line-clamp-2">
+                                  <span className="font-medium">Input:</span> {
+                                    Array.isArray(testCase.input) 
+                                      ? `${testCase.input.length} items`
+                                      : testCase.input || 'None'
+                                  }
+                                </p>
+                                {testCase.expected_output && (
+                                  <p className="text-xs text-slate-500 line-clamp-2">
+                                    <span className="font-medium">Expected:</span> {testCase.expected_output}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <TestCaseDetailModal
+                          testCase={testCase}
+                          trigger={
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
+                        <span className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded font-mono">
+                          {testCase.id.slice(-8)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
