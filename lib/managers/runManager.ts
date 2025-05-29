@@ -198,6 +198,18 @@ export class RunManager {
       throw error;
     }
   }
+
+  /**
+   * Delete a run from local cache only (for cleanup of orphaned runs)
+   */
+  async deleteRunLocal(id: string): Promise<void> {
+    try {
+      await db.runs.delete(id);
+    } catch (error) {
+      console.error(`Error in deleteRunLocal(${id}):`, error);
+      throw error;
+    }
+  }
   
   /**
    * Sync runs with the API for a specific experiment

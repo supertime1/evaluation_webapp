@@ -58,10 +58,23 @@ export class ExperimentManager {
         await db.experiments.put(experiment);
         
         return experiment;
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error fetching experiment ${id} from API:`, error);
         
-        // Return cached data if we have it
+        // Check if it's a 404 error (experiment deleted)
+        if (error.response?.status === 404) {
+          // Remove from cache if it exists since it's deleted on the server
+          if (cachedExperiment) {
+            await db.experiments.delete(id);
+          }
+          
+          // Create a more descriptive error for deleted experiments
+          const notFoundError = new Error(`Experiment ${id} no longer exists (may have been deleted)`);
+          notFoundError.name = 'ExperimentNotFound';
+          throw notFoundError;
+        }
+        
+        // Return cached data if we have it for other errors
         if (cachedExperiment) {
           return cachedExperiment;
         }

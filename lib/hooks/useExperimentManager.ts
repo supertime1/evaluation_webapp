@@ -23,6 +23,30 @@ export function useExperiment(id: string) {
     queryKey: [EXPERIMENTS_QUERY_KEY, id],
     queryFn: () => experimentManager.getExperiment(id),
     enabled: !!id, // Only run the query if id is provided
+    retry: (failureCount, error: any) => {
+      // Don't retry on 404 errors (deleted experiments)
+      if (error?.response?.status === 404 || 
+          error?.name === 'ExperimentNotFound' ||
+          error?.message?.includes('404') ||
+          error?.message?.includes('no longer exists')) {
+        return false;
+      }
+      // Retry other errors up to 3 times
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Don't throw errors for 404s - let the component handle them via the error property
+    throwOnError: (error: any) => {
+      // Don't throw for 404 errors, let the component handle them gracefully
+      if (error?.response?.status === 404 || 
+          error?.name === 'ExperimentNotFound' ||
+          error?.message?.includes('404') ||
+          error?.message?.includes('no longer exists')) {
+        return false;
+      }
+      // Throw other errors as usual
+      return true;
+    },
   });
 }
 
