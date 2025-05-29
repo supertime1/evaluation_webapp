@@ -69,14 +69,30 @@ export function DatasetVersionHistory({
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TagIcon className="h-5 w-5" />
-          Version History
-          {versions && versions.length > 0 && <span className="text-sm font-normal text-slate-500">({versions.length})</span>}
-        </CardTitle>
-        <CardDescription>
-          Create new versions to add or remove test cases
-        </CardDescription>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <TagIcon className="h-5 w-5" />
+              Version History
+              {versions && versions.length > 0 && <span className="text-sm font-normal text-slate-500">({versions.length})</span>}
+            </CardTitle>
+            <CardDescription>
+              Create new versions to add or remove test cases
+            </CardDescription>
+          </div>
+          {versions && versions.length > 0 && (
+            <DatasetVersionCreateModal
+              datasetId={datasetId}
+              trigger={
+                <Button className="h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md flex items-center gap-2">
+                  <PlusIcon className="h-4 w-4" />
+                  Create New Version
+                </Button>
+              }
+              onSuccess={refetch}
+            />
+          )}
+        </div>
       </CardHeader>
 
       <CardContent>
@@ -109,20 +125,6 @@ export function DatasetVersionHistory({
                 onCompare={onCompare}
               />
             ))}
-            
-            {/* Create Version Button */}
-            <div className="flex justify-center pt-4">
-              <DatasetVersionCreateModal
-                datasetId={datasetId}
-                trigger={
-                  <Button className="h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md flex items-center gap-2">
-                    <PlusIcon className="h-4 w-4" />
-                    Create New Version
-                  </Button>
-                }
-                onSuccess={refetch}
-              />
-            </div>
           </div>
         )}
       </CardContent>
