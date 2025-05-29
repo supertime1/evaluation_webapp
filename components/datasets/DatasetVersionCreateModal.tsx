@@ -12,6 +12,7 @@ import { DatasetVersionCreate } from '@/lib/schemas/datasetVersion';
 import { TestCaseCreate } from '@/lib/schemas/testCase';
 import { TestCase } from '@/lib/schemas/testCase';
 import { TestCaseDetailModal } from './TestCaseDetailModal';
+import { PDFImporter } from '@/components/ui/pdf-importer';
 import { Plus, Minus, X, Eye } from 'lucide-react';
 
 interface DatasetVersionCreateModalProps {
@@ -472,6 +473,22 @@ export function DatasetVersionCreateModal({
                         className="w-full h-20 px-3 py-2 border border-slate-300 rounded-md focus:border-slate-400 focus:ring-2 focus:ring-slate-200 text-sm resize-none"
                         placeholder="Test input (required - can be text or JSON for complex inputs)"
                       />
+                      
+                      {/* PDF Importer */}
+                      <div className="mt-2">
+                        <PDFImporter
+                          onTextExtracted={(text, filename) => {
+                            setNewTestCaseForm(prev => ({ 
+                              ...prev, 
+                              input: text,
+                              // Optionally update name if it's empty
+                              name: prev.name || `PDF Test Case - ${filename.replace('.pdf', '')}`
+                            }));
+                          }}
+                          disabled={isLoading}
+                          compact={true}
+                        />
+                      </div>
                     </div>
 
                     <div>

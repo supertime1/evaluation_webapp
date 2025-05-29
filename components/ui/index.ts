@@ -10,6 +10,7 @@ export type { InputProps } from "./input"
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs"
 
 export { Badge } from "./badge"
+export { PDFImporter } from './pdf-importer'
 
 export { Label } from "./label"
 
