@@ -143,7 +143,92 @@ export function calculatePercentageChange(current: number, previous: number): nu
 }
 
 /**
- * Calculate metric trends comparing the most recent runs to previous runs
+ * Calculate metric trends comparing the two most recent runs
+ */
+export function calculateTwoRunComparison(
+  testResults: TestResultEntity[], 
+  runs: any[]
+): {
+  trends: Record<string, number>;
+  mostRecentRun: any | null;
+  previousRun: any | null;
+  comparisonCount: number;
+} {
+  // Sort runs by creation date (most recent first)
+  const sortedRuns = [...runs].sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+  
+  // Get the two most recent runs
+  const mostRecentRun = sortedRuns[0] || null;
+  const previousRun = sortedRuns[1] || null;
+  
+  if (!mostRecentRun || !previousRun) {
+    return {
+      trends: {},
+      mostRecentRun,
+      previousRun,
+      comparisonCount: sortedRuns.length
+    };
+  }
+  
+  // Group test results by run
+  const testResultsByRunId: Record<string, TestResultEntity[]> = {};
+  
+  testResults.forEach(result => {
+    if (!testResultsByRunId[result.run_id]) {
+      testResultsByRunId[result.run_id] = [];
+    }
+    testResultsByRunId[result.run_id].push(result);
+  });
+  
+  // Get test results for the two most recent runs
+  const mostRecentResults = testResultsByRunId[mostRecentRun.id] || [];
+  const previousResults = testResultsByRunId[previousRun.id] || [];
+  
+  if (mostRecentResults.length === 0 || previousResults.length === 0) {
+    return {
+      trends: {},
+      mostRecentRun,
+      previousRun,
+      comparisonCount: sortedRuns.length
+    };
+  }
+  
+  // Calculate stats for both runs
+  const mostRecentStats = calculateMetricStats(mostRecentResults);
+  const previousStats = calculateMetricStats(previousResults);
+  
+  // Create map of previous stats by name for easier lookup
+  const previousStatsByName = new Map<string, MetricStats>();
+  previousStats.forEach(stat => {
+    previousStatsByName.set(stat.name, stat);
+  });
+  
+  // Calculate percentage changes
+  const trends: Record<string, number> = {};
+  
+  mostRecentStats.forEach(recentStat => {
+    const previousStat = previousStatsByName.get(recentStat.name);
+    
+    if (previousStat) {
+      trends[recentStat.name] = calculatePercentageChange(
+        recentStat.average, 
+        previousStat.average
+      );
+    }
+  });
+  
+  return {
+    trends,
+    mostRecentRun,
+    previousRun,
+    comparisonCount: sortedRuns.length
+  };
+}
+
+/**
+ * Calculate metric trends comparing the most recent runs to previous runs (original function)
  */
 export function calculateMetricTrends(
   testResults: TestResultEntity[], 
