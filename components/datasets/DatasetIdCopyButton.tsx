@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+// import { useState } from 'react';
+// import { Button } from '@/components/ui/button';
 
 interface DatasetIdCopyButtonProps {
   datasetId: string;
@@ -9,20 +9,20 @@ interface DatasetIdCopyButtonProps {
 }
 
 export function DatasetIdCopyButton({ datasetId, className = '' }: DatasetIdCopyButtonProps) {
-  const [copied, setCopied] = useState(false);
+  // const [copied, setCopied] = useState(false);
 
-  const handleCopy = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // const handleCopy = async (e: React.MouseEvent) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
     
-    try {
-      await navigator.clipboard.writeText(datasetId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy dataset ID:', err);
-    }
-  };
+  //   try {
+  //     await navigator.clipboard.writeText(datasetId);
+  //     setCopied(true);
+  //     setTimeout(() => setCopied(false), 2000);
+  //   } catch (err) {
+  //     console.error('Failed to copy dataset ID:', err);
+  //   }
+  // };
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -30,7 +30,7 @@ export function DatasetIdCopyButton({ datasetId, className = '' }: DatasetIdCopy
       <code className="text-sm font-mono bg-slate-100 px-2 py-1 rounded border">
         {datasetId}
       </code>
-      <Button
+      {/* <Button
         variant="outline"
         size="sm"
         onClick={handleCopy}
@@ -51,7 +51,7 @@ export function DatasetIdCopyButton({ datasetId, className = '' }: DatasetIdCopy
             Copy ID
           </>
         )}
-      </Button>
+      </Button> */}
     </div>
   );
 } 
