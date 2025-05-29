@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ExperimentEntity } from '@/lib/models';
 import { ExperimentIdCopyButton } from '@/components/experiments/ExperimentIdCopyButton';
-import { useDeleteExperiment } from '@/lib/hooks/useExperimentManager';
+import { useDeleteExperiment, useUpdateExperiment } from '@/lib/hooks/useExperimentManager';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -15,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 interface ExperimentDetailHeaderProps {
   experiment: ExperimentEntity;
@@ -25,8 +28,17 @@ export function ExperimentDetailHeader({ experiment, className = '' }: Experimen
   console.log('ExperimentDetailHeader rendering with experiment:', experiment);
   
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showRunInfoDialog, setShowRunInfoDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: experiment.name,
+    description: experiment.description || '',
+  });
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  
   const deleteMutation = useDeleteExperiment();
+  const updateMutation = useUpdateExperiment();
   const router = useRouter();
 
   const handleDelete = async () => {
@@ -50,6 +62,87 @@ export function ExperimentDetailHeader({ experiment, className = '' }: Experimen
   const handleCloseDialog = () => {
     setShowDeleteDialog(false);
     setDeleteError(null);
+  };
+
+  const handleShowRunInfo = () => {
+    setShowRunInfoDialog(true);
+  };
+
+  const handleCloseRunInfoDialog = () => {
+    setShowRunInfoDialog(false);
+  };
+
+  const handleShowEditDialog = () => {
+    setEditFormData({
+      name: experiment.name,
+      description: experiment.description || '',
+    });
+    setEditErrors({});
+    setShowEditDialog(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    setShowEditDialog(false);
+    setEditErrors({});
+  };
+
+  const validateEditForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!editFormData.name.trim()) {
+      newErrors.name = 'Experiment name is required';
+    } else if (editFormData.name.length < 3) {
+      newErrors.name = 'Experiment name must be at least 3 characters';
+    } else if (editFormData.name.length > 100) {
+      newErrors.name = 'Experiment name must be less than 100 characters';
+    }
+
+    if (editFormData.description && editFormData.description.length > 500) {
+      newErrors.description = 'Description must be less than 500 characters';
+    }
+
+    setEditErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateEditForm()) {
+      return;
+    }
+
+    try {
+      // Create the update object with all required fields
+      const updateData: { name?: string; description?: string } = {};
+      
+      // Only include fields that have changed
+      if (editFormData.name !== experiment.name) {
+        updateData.name = editFormData.name;
+      }
+      if (editFormData.description !== (experiment.description || '')) {
+        updateData.description = editFormData.description || undefined;
+      }
+
+      // Only send the update if something changed
+      const hasChanges = Object.keys(updateData).length > 0;
+      if (hasChanges) {
+        // Construct a proper ExperimentUpdate object
+        const experimentUpdate = {
+          name: updateData.name || experiment.name, // Use current name if not changed
+          description: updateData.description !== undefined ? updateData.description : experiment.description
+        };
+        
+        await updateMutation.mutateAsync({ id: experiment.id, data: experimentUpdate });
+      }
+
+      setShowEditDialog(false);
+      setEditErrors({});
+    } catch (error: any) {
+      console.error('Failed to update experiment:', error);
+      const errorMessage = error.message || 'Failed to update experiment. Please try again.';
+      setEditErrors({ submit: errorMessage });
+    }
   };
 
   return (
@@ -95,7 +188,7 @@ export function ExperimentDetailHeader({ experiment, className = '' }: Experimen
         <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:min-w-[200px]">
           <Button
             variant="outline"
-            onClick={() => router.push(`/dashboard/experiments/${experiment.id}/edit`)}
+            onClick={handleShowEditDialog}
             className="h-11 px-4"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -105,26 +198,12 @@ export function ExperimentDetailHeader({ experiment, className = '' }: Experimen
           </Button>
           
           <Button
-            variant="default"
-            onClick={() => router.push(`/dashboard/experiments/${experiment.id}/runs/new`)}
-            className="h-11 px-4"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            New Run
-          </Button>
-          
-          <Button
             variant="outline"
-            onClick={() => router.push(`/dashboard/experiments/${experiment.id}/settings`)}
+            onClick={handleShowRunInfo}
             className="h-11 px-4"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Settings
+            <InformationCircleIcon className="h-4 w-4 mr-2" />
+            New Run
           </Button>
           
           <Button
@@ -140,6 +219,88 @@ export function ExperimentDetailHeader({ experiment, className = '' }: Experimen
         </div>
       </div>
 
+      {/* Edit Dialog */}
+      {showEditDialog && (
+        <Dialog open={showEditDialog} onOpenChange={handleCloseEditDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-slate-900">
+                Edit Experiment
+              </DialogTitle>
+              <DialogDescription>
+                Update the experiment name and description
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleEditSubmit} className="space-y-5">
+              {editErrors.submit && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {editErrors.submit}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-name" className="text-sm font-medium text-slate-700">
+                  Experiment Name *
+                </Label>
+                <Input
+                  id="edit-name"
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  className={`h-11 w-full ${
+                    editErrors.name ? 'border-red-300 focus:border-red-400' : ''
+                  }`}
+                  placeholder="Enter experiment name"
+                  disabled={updateMutation.isPending}
+                />
+                {editErrors.name && (
+                  <p className="text-sm text-red-600">{editErrors.name}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-description" className="text-sm font-medium text-slate-700">
+                  Description
+                </Label>
+                <textarea
+                  id="edit-description"
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  className={`w-full rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-slate-200 min-h-[80px] ${
+                    editErrors.description ? 'border-red-300 focus:border-red-400' : 'border-slate-300 focus:border-slate-400'
+                  }`}
+                  placeholder="Describe the purpose of this experiment (optional)"
+                  disabled={updateMutation.isPending}
+                />
+                {editErrors.description && (
+                  <p className="text-sm text-red-600">{editErrors.description}</p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  onClick={handleCloseEditDialog}
+                  disabled={updateMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={updateMutation.isPending || !editFormData.name.trim()}
+                  className="bg-slate-900 hover:bg-slate-800 text-white"
+                >
+                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Dialog */}
       {showDeleteDialog && (
         <Dialog open={showDeleteDialog} onOpenChange={handleCloseDialog}>
           <DialogContent className="sm:max-w-[425px]">
@@ -195,6 +356,61 @@ export function ExperimentDetailHeader({ experiment, className = '' }: Experimen
                   Close
                 </Button>
               )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Run Info Dialog */}
+      {showRunInfoDialog && (
+        <Dialog open={showRunInfoDialog} onOpenChange={handleCloseRunInfoDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <InformationCircleIcon className="h-5 w-5 text-blue-500 mr-2" />
+                Automatic Run Creation
+              </DialogTitle>
+              <DialogDescription>
+                How evaluation runs are created in this system
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <p className="text-slate-700">
+                Runs are automatically created by the LLM system being evaluated, not through the web interface.
+              </p>
+              
+              <p className="text-slate-700">
+                Each time the evaluation system is run with your test cases, a new run will be generated automatically
+                and will appear in your experiment dashboard.
+              </p>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <InformationCircleIcon className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-blue-800">
+                      What happens when a run is created?
+                    </h3>
+                    <div className="mt-2 text-sm text-blue-700">
+                      <ul className="list-disc list-inside space-y-1">
+                        <li>Test cases are executed against your LLM</li>
+                        <li>Metrics are calculated for each test result</li>
+                        <li>Results are automatically saved to this experiment</li>
+                        <li>Charts and summaries are updated in real-time</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button onClick={handleCloseRunInfoDialog}>
+                Got it
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
