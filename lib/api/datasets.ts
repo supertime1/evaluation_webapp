@@ -13,17 +13,13 @@ export const createDataset = async (data: DatasetCreate): Promise<Dataset> => {
   return response.data;
 };
 
-export const getDatasets = async (skip: number = 0, limit: number = 100): Promise<Dataset[]> => {
-  const response = await apiClient.get('/api/v1/datasets/', {
-    params: { skip, limit }
-  });
+export const getDatasets = async (): Promise<Dataset[]> => {
+  const response = await apiClient.get('/api/v1/datasets/');
   return response.data;
 };
 
-export const getGlobalDatasets = async (skip: number = 0, limit: number = 100): Promise<Dataset[]> => {
-  const response = await apiClient.get('/api/v1/datasets/global', {
-    params: { skip, limit }
-  });
+export const getGlobalDatasets = async (): Promise<Dataset[]> => {
+  const response = await apiClient.get('/api/v1/datasets/global');
   return response.data;
 };
 
@@ -39,17 +35,4 @@ export const updateDataset = async (datasetId: string, data: DatasetUpdate): Pro
 
 export const deleteDataset = async (datasetId: string): Promise<void> => {
   await apiClient.delete(`/api/v1/datasets/${datasetId}`);
-};
-
-// Dataset test case management
-export const addTestCaseToDataset = async (datasetId: string, testCaseId: string): Promise<void> => {
-  await apiClient.post(`/api/v1/datasets/${datasetId}/add-test-case`, null, {
-    params: { test_case_id: testCaseId }
-  });
-};
-
-export const removeTestCaseFromDataset = async (datasetId: string, testCaseId: string): Promise<void> => {
-  await apiClient.post(`/api/v1/datasets/${datasetId}/remove-test-case`, null, {
-    params: { test_case_id: testCaseId }
-  });
 }; 

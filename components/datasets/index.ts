@@ -11,9 +11,7 @@ export { DatasetVersionHistory } from './DatasetVersionHistory';
 export { DatasetVersionCard } from './DatasetVersionCard';
 export { DatasetVersionComparison } from './DatasetVersionComparison';
 export { DatasetVersionCreateModal } from './DatasetVersionCreateModal';
+export { DatasetVersionDetailModal } from './DatasetVersionDetailModal';
 
 // Test Case Integration Components
-export { TestCaseSelector } from './TestCaseSelector';
-export { TestCaseBulkSelector } from './TestCaseBulkSelector';
-export { TestCaseDatasetManager } from './TestCaseDatasetManager';
 export { TestCasePreview } from './TestCasePreview'; 
