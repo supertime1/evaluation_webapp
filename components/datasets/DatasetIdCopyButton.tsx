@@ -26,9 +26,10 @@ export function DatasetIdCopyButton({ datasetId, className = '' }: DatasetIdCopy
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <span className="text-xs text-slate-500 font-mono">
+      <span className="text-sm text-slate-500">Dataset ID:</span>
+      <code className="text-sm font-mono bg-slate-100 px-2 py-1 rounded border">
         {datasetId}
-      </span>
+      </code>
       <Button
         variant="outline"
         size="sm"
