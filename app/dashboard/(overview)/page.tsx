@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useExperiments } from '@/lib/hooks/useExperimentManager';
 import { useDatasets } from '@/lib/hooks/useDatasetManager';
+import { DatasetCreateModal } from '@/components/datasets/DatasetCreateModal';
 import { formatDistanceToNow } from 'date-fns';
 
 type SyncStatus = 'loading' | 'success' | 'error';
@@ -19,8 +20,8 @@ export default function DashboardPage() {
     const programListRef = useRef<{ refresh: () => Promise<void> }>(null);
     
     // Fetch experiments and datasets using the hooks
-    const { data: experiments, isLoading: isExperimentsLoading, error: experimentsError } = useExperiments();
-    const { data: datasets, isLoading: isDatasetsLoading, error: datasetsError } = useDatasets();
+    const { data: experiments, isLoading: isExperimentsLoading, error: experimentsError, refetch: refetchExperiments } = useExperiments();
+    const { data: datasets, isLoading: isDatasetsLoading, error: datasetsError, refetch: refetchDatasets } = useDatasets();
 
     // Define initializeData outside useEffect
     const initializeData = async () => {
@@ -226,13 +227,16 @@ export default function DashboardPage() {
                             )}
                         </div>
                         <div className="mt-6">
-                            <Link href="/dashboard/datasets/new" className="block w-full">
+                            <DatasetCreateModal
+                              trigger={
                                 <Button 
                                     className="w-full h-11 bg-white border border-slate-300 hover:bg-slate-50 text-slate-800 font-medium transition-colors"
                                 >
                                     Create Dataset
                                 </Button>
-                            </Link>
+                              }
+                              onSuccess={refetchDatasets}
+                            />
                         </div>
                     </div>
                 </div>
