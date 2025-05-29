@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import { useDatasetVersionHistory } from '@/lib/hooks/useDatasetVersionManager';
-import { DatasetVersionCreateModal, DatasetVersionDetailModal } from '@/components/datasets';
+import { DatasetVersionCreateModal, DatasetVersionDetailModal, DatasetVersionIdCopyButton } from '@/components/datasets';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, TagIcon, CalendarIcon, DocumentTextIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
@@ -69,29 +69,14 @@ export function DatasetVersionHistory({
   return (
     <Card className={className}>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <TagIcon className="h-5 w-5" />
-              Version History
-            </CardTitle>
-            <CardDescription>
-              Create new versions to add or remove test cases
-            </CardDescription>
-          </div>
-          {versions && versions.length > 0 && (
-            <DatasetVersionCreateModal
-              datasetId={datasetId}
-              trigger={
-                <Button className="h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md flex items-center gap-2">
-                  <PlusIcon className="h-4 w-4" />
-                  Create New Version
-                </Button>
-              }
-              onSuccess={refetch}
-            />
-          )}
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <TagIcon className="h-5 w-5" />
+          Version History
+          {versions && versions.length > 0 && <span className="text-sm font-normal text-slate-500">({versions.length})</span>}
+        </CardTitle>
+        <CardDescription>
+          Create new versions to add or remove test cases
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
@@ -124,6 +109,20 @@ export function DatasetVersionHistory({
                 onCompare={onCompare}
               />
             ))}
+            
+            {/* Create Version Button */}
+            <div className="flex justify-center pt-4">
+              <DatasetVersionCreateModal
+                datasetId={datasetId}
+                trigger={
+                  <Button className="h-10 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-md flex items-center gap-2">
+                    <PlusIcon className="h-4 w-4" />
+                    Create New Version
+                  </Button>
+                }
+                onSuccess={refetch}
+              />
+            </div>
           </div>
         )}
       </CardContent>
@@ -183,6 +182,7 @@ function VersionCard({ version, isCurrent, isLatest, datasetId, onCompare }: Ver
               Compare
             </Button>
           )}
+          <DatasetVersionIdCopyButton versionId={version.id} />
           <DatasetVersionDetailModal
             version={version}
             isCurrent={isCurrent}
@@ -209,7 +209,7 @@ function VersionCard({ version, isCurrent, isLatest, datasetId, onCompare }: Ver
         </div>
       )}
 
-      {/* Test Case Count */}
+      {/* Test Case Count and Version ID */}
       <div className="flex items-center gap-4 text-sm text-slate-500 mt-3 ml-6">
         <div className="flex items-center gap-1">
           <DocumentTextIcon className="h-4 w-4" />
